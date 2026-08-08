@@ -9,11 +9,10 @@ def main():
     print("Photona Database Builder")
     print("=" * 60)
 
-    event_folder = Path(
-        input("Enter Event Folder Path: ").strip()
-    )
+    event_folder = Path(input("Enter Event Folder Path: ").strip())
+    event_name = input("Enter Event Name: ").strip()
 
-    summary = build_database(event_folder)
+    summary = build_database(event_name, event_folder)
 
     print()
 
@@ -24,7 +23,7 @@ def main():
     print(f"Images Processed : {summary['images_processed']}")
     print(f"Faces Detected   : {summary['faces_detected']}")
     print(f"Faces Indexed    : {summary['index_size']}")
-    print(f"Database Path    : {summary['database_path']}")
+
 
 
 if __name__ == "__main__":

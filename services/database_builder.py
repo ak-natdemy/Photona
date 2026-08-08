@@ -1,6 +1,3 @@
-from pathlib import Path
-
-from config import DATABASE_DIR
 from core.detector import load_face_model
 from core.event_processor import process_event
 
@@ -15,19 +12,9 @@ from core.database import (
 )
 
 
-def build_database(event_folder: Path) -> dict:
+def build_database(event_name, event_folder):
     """
     Build the complete face database for an event.
-
-    Parameters
-    ----------
-    event_folder : Path
-        Path to the event folder.
-
-    Returns
-    -------
-    dict
-        Summary of the database creation.
     """
 
     # ----------------------------------------
@@ -49,17 +36,28 @@ def build_database(event_folder: Path) -> dict:
     # Build FAISS Index
     # ----------------------------------------
 
-    index = build_faiss_index(face_records)
+    index = build_faiss_index(
+        face_records
+    )
 
     # ----------------------------------------
     # Save Database
     # ----------------------------------------
 
-    save_image_records(image_records)
+    save_image_records(
+        image_records,
+        event_name
+    )
 
-    save_face_records(face_records)
+    save_face_records(
+        face_records,
+        event_name
+    )
 
-    save_faiss_index(index)
+    save_faiss_index(
+        index,
+        event_name
+    )
 
     # ----------------------------------------
     # Return Summary
@@ -67,9 +65,8 @@ def build_database(event_folder: Path) -> dict:
 
     return {
         "success": True,
-        "event_folder": str(event_folder),
+        "event_name": event_name,
         "images_processed": len(image_records),
         "faces_detected": len(face_records),
-        "index_size": index.ntotal,
-        "database_path": DATABASE_DIR
+        "index_size": index.ntotal
     }

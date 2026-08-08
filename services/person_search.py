@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from core.detector import (
     load_face_model,
     process_query_image
@@ -24,19 +22,13 @@ from core.display import (
 )
 
 
-def search_person(query_image_path: Path) -> dict:
+def search_person(
+    event_name,
+    person_name,
+    query_image_path
+):
     """
-    Search for a person in the face database.
-
-    Parameters
-    ----------
-    query_image_path : Path
-        Path to the query image.
-
-    Returns
-    -------
-    dict
-        Search summary.
+    Search for a person inside a specific event.
     """
 
     # ----------------------------------------
@@ -46,14 +38,20 @@ def search_person(query_image_path: Path) -> dict:
     app = load_face_model()
 
     # ----------------------------------------
-    # Load Database
+    # Load Event Database
     # ----------------------------------------
 
-    index = load_faiss_index()
+    index = load_faiss_index(
+        event_name
+    )
 
-    face_records = load_face_records()
+    face_records = load_face_records(
+        event_name
+    )
 
-    image_records = load_image_records()
+    image_records = load_image_records(
+        event_name
+    )
 
     # ----------------------------------------
     # Process Query Image
@@ -65,7 +63,20 @@ def search_person(query_image_path: Path) -> dict:
     )
 
     # ----------------------------------------
-    # Search Database
+    # Check Query Face
+    # ----------------------------------------
+
+    if query_embedding is None:
+        return {
+            "success": False,
+            "event_name": event_name,
+            "total_matches": 0,
+            "matching_images": [],
+            "output_folder": None
+        }
+
+    # ----------------------------------------
+    # Search Faces
     # ----------------------------------------
 
     face_matches = search_faces(
@@ -73,6 +84,10 @@ def search_person(query_image_path: Path) -> dict:
         index=index,
         face_records=face_records
     )
+
+    # ----------------------------------------
+    # Get Matching Images
+    # ----------------------------------------
 
     matching_images = get_matching_images(
         face_matches=face_matches,
@@ -85,15 +100,16 @@ def search_person(query_image_path: Path) -> dict:
 
     output_folder = copy_matching_images(
         matching_images=matching_images,
-        person_name=query_image_path.stem
+        person_name=person_name
     )
 
     # ----------------------------------------
-    # Return Summary
+    # Return Results
     # ----------------------------------------
 
     return {
         "success": True,
+        "event_name": event_name,
         "total_matches": len(matching_images),
         "matching_images": matching_images,
         "output_folder": output_folder

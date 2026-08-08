@@ -10,11 +10,11 @@ EVENTS_DIR = PROJECT_DIR / "events"
 
 DATABASE_DIR = PROJECT_DIR / "database"
 
-FAISS_INDEX_FILE = DATABASE_DIR / "face_index.faiss"
+FAISS_INDEX_FILE = "face_index.faiss"
 
-IMAGE_RECORDS_FILE = DATABASE_DIR / "image_records.pkl"
+IMAGE_RECORDS_FILE = "image_records.pkl"
 
-FACE_RECORDS_FILE = DATABASE_DIR / "face_records.pkl"
+FACE_RECORDS_FILE =  "face_records.pkl"
 
 MODELS_DIR = PROJECT_DIR / "models"
 
@@ -46,3 +46,29 @@ VALID_IMAGE_EXTENSIONS = (
     ".bmp",
     ".webp",
 )
+
+# ============================================================
+# EVENT DATABASE DIRECTORY
+# ============================================================
+
+def get_event_database_dir(event_name: str) -> Path:
+    """
+    Return the database directory for a specific event.
+
+    Example
+    -------
+    event_name = "Wedding"
+
+    Returns
+    -------
+    database/Wedding/
+    """
+
+    event_database_dir = DATABASE_DIR / event_name
+
+    event_database_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    return event_database_dir

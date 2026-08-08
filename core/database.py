@@ -1,53 +1,65 @@
 import pickle
 
-from config import IMAGE_RECORDS_FILE, FACE_RECORDS_FILE
+from config import (
+    get_event_database_dir,
+    FACE_RECORDS_FILE,
+    IMAGE_RECORDS_FILE
+)
 
 
-def save_image_records(image_records):
+def save_face_records(face_records, event_name):
     """
-    Save image records to disk.
-    """
-
-    with open( IMAGE_RECORDS_FILE, "wb") as file:
-
-        pickle.dump( image_records, file)
-
-
-def load_image_records():
-    """
-    Load image records from disk.
+    Save face records for a specific event.
     """
 
-    if not IMAGE_RECORDS_FILE.exists():
-        raise FileNotFoundError( f"Image records not found: {IMAGE_RECORDS_FILE}" )
+    event_dir = get_event_database_dir(event_name)
 
-    with open( IMAGE_RECORDS_FILE, "rb") as file:
+    file_path = event_dir / FACE_RECORDS_FILE
 
-        image_records = pickle.load( file)
-
-    return image_records
-
-
-def save_face_records(face_records):
-    """
-    Save face records to disk.
-    """
-
-    with open( FACE_RECORDS_FILE, "wb") as file:
-
+    with open(file_path, "wb") as file:
         pickle.dump( face_records, file )
 
 
-def load_face_records():
+def load_face_records(event_name):
     """
-    Load face records from disk.
+    Load face records for a specific event.
     """
 
-    if not FACE_RECORDS_FILE.exists():
-        raise FileNotFoundError( f"Image records not found: {FACE_RECORDS_FILE}" )
+    event_dir = get_event_database_dir(event_name)
 
-    with open( FACE_RECORDS_FILE, "rb" ) as file:
+    file_path = event_dir / FACE_RECORDS_FILE
 
-        face_records = pickle.load( file )
+    if not file_path.exists():
+        raise FileNotFoundError( f"Face records not found for event: {event_name}" )
 
-    return face_records
+    with open(file_path, "rb") as file:
+        return pickle.load(file)
+
+
+def save_image_records(image_records, event_name):
+    """
+    Save image records for a specific event.
+    """
+
+    event_dir = get_event_database_dir(event_name)
+
+    file_path = event_dir / IMAGE_RECORDS_FILE
+
+    with open(file_path, "wb") as file:
+        pickle.dump( image_records, file )
+
+
+def load_image_records(event_name):
+    """
+    Load image records for a specific event.
+    """
+
+    event_dir = get_event_database_dir(event_name)
+
+    file_path = event_dir / IMAGE_RECORDS_FILE
+
+    if not file_path.exists():
+        raise FileNotFoundError( f"Image records not found for event: {event_name}" )
+
+    with open(file_path, "rb") as file:
+        return pickle.load(file)
