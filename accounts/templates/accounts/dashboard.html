@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Photona Dashboard</title>
+
+</head>
+
+<body>
+
+    <h1>Welcome to Photona</h1>
+
+    <h2>Welcome, {{ user.username }}</h2>
+
+    <p>
+        Tenant:
+        <strong>{{ tenant.name }}</strong>
+    </p>
+
+    <p>
+        Role:
+        <strong>{{ user.get_role_display }}</strong>
+    </p>
+
+</body>
+
+</html>
