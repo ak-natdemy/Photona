@@ -32,6 +32,10 @@ class Event(models.Model):
         auto_now=True
     )
 
+    @property
+    def ai_database_name(self):
+        return f"event_{self.id}"
+
     def __str__(self):
         return self.name
 
