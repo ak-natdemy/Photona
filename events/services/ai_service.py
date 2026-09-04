@@ -16,28 +16,49 @@ def build_event_database(event):
         exist_ok=True
     )
 
-    for event_photo in event.photos.all():
-
-        source_path = Path(
-            event_photo.image.path
-        )
-
-        destination_path = (
-            event_input_dir /
-            source_path.name
-        )
-
-        shutil.copy2(
-            source_path,
-            destination_path
-        )
-
-    result = build_database(
-        event.ai_database_name,
-        event_input_dir
+    event.ai_status = "processing"
+    event.save(
+        update_fields=["ai_status"]
     )
 
-    return result
+    try:
+
+        for event_photo in event.photos.all():
+
+            source_path = Path(
+                event_photo.image.path
+            )
+
+            destination_path = (
+                event_input_dir /
+                source_path.name
+            )
+
+            shutil.copy2(
+                source_path,
+                destination_path
+            )
+
+        result = build_database(
+            event.ai_database_name,
+            event_input_dir
+        )
+
+        event.ai_status = "ready"
+        event.save(
+            update_fields=["ai_status"]
+        )
+
+        return result
+
+    except Exception:
+
+        event.ai_status = "failed"
+        event.save(
+            update_fields=["ai_status"]
+        )
+
+        raise
 
 
 def search_event_person(

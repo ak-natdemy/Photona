@@ -12,7 +12,7 @@ from core.database import (
 )
 
 
-def build_database(event_name, event_folder):
+def build_database(event_id, image_records):
     """
     Build the complete face database for an event.
     """
@@ -27,8 +27,8 @@ def build_database(event_name, event_folder):
     # Process Event Images
     # ----------------------------------------
 
-    image_records, face_records = process_event(
-        event_folder=event_folder,
+    processed_image_records, face_records = process_event(
+        image_records=image_records,
         app=app
     )
 
@@ -45,18 +45,18 @@ def build_database(event_name, event_folder):
     # ----------------------------------------
 
     save_image_records(
-        image_records,
-        event_name
+        processed_image_records,
+        event_id
     )
 
     save_face_records(
         face_records,
-        event_name
+        event_id
     )
 
     save_faiss_index(
         index,
-        event_name
+        event_id
     )
 
     # ----------------------------------------
@@ -65,8 +65,8 @@ def build_database(event_name, event_folder):
 
     return {
         "success": True,
-        "event_name": event_name,
-        "images_processed": len(image_records),
+        "event_id": event_id,
+        "images_processed": len(processed_image_records),
         "faces_detected": len(face_records),
         "index_size": index.ntotal
     }

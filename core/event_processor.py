@@ -45,26 +45,30 @@ def get_image_files(
 
 
 def process_event(
-    event_folder,
+    image_records,
     app
 ):
     """
-    Process an entire event folder.
+    Process all supplied event images.
     """
 
     # ----------------------------------------
-    # Get Image Files
+    # Prepare Image Records
     # ----------------------------------------
 
-    image_files = get_image_files(
-        event_folder
-    )
+    image_files = [
+        {
+            "image_id": record["image_id"],
+            "image_path": Path(record["image_path"])
+        }
+        for record in image_records
+    ]
 
     # ----------------------------------------
     # Create Databases
     # ----------------------------------------
 
-    image_records = []
+    processed_image_records = []
 
     face_records = []
 
@@ -72,12 +76,13 @@ def process_event(
     # Process Every Image
     # ----------------------------------------
 
-    for image_id, image_path in enumerate(
-        tqdm(image_files),
-        start=1
-    ):
+    for record in tqdm(image_files):
 
-        image_record, face_record_list  = process_image(
+        image_id = record["image_id"]
+
+        image_path = record["image_path"]
+
+        image_record, face_record_list = process_image(
             image_path=image_path,
             app=app,
             image_id=image_id
@@ -86,12 +91,12 @@ def process_event(
         if image_record is None:
             continue
 
-        image_records.append(
+        processed_image_records.append(
             image_record
         )
 
         face_records.extend(
-            face_record_list 
+            face_record_list
         )
 
-    return image_records, face_records
+    return processed_image_records, face_records

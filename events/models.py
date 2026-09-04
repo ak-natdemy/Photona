@@ -24,6 +24,19 @@ class Event(models.Model):
         default=True
     )
 
+    AI_STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("ready", "Ready"),
+        ("failed", "Failed"),
+    ]
+
+    ai_status = models.CharField(
+        max_length=20,
+        choices=AI_STATUS_CHOICES,
+        default="pending"
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )

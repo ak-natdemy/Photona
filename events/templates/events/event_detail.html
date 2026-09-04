@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ event.name }} - Photona</title>
+
+</head>
+
+<body>
+
+    <h1>{{ event.name }}</h1>
+
+    <p>
+        Tenant:
+        <strong>{{ event.tenant.name }}</strong>
+    </p>
+
+    <p>
+        Event date:
+        <strong>{{ event.event_date }}</strong>
+    </p>
+
+    <p>
+        AI Status:
+        <strong>
+            {{ event.get_ai_status_display }}
+        </strong>
+    </p>
+
+    <hr>
+
+    <!-- Event Actions -->
+
+    <h2>Event Actions</h2>
+
+    <p>
+        <a href="{% url 'events:upload_photos' event.id %}">
+            + Upload Photos
+        </a>
+    </p>
+
+    <hr>
+
+    <!-- Event Photos -->
+
+    <h2>Photos</h2>
+
+    <p>
+        Total photos:
+        <strong>{{ photos|length }}</strong>
+    </p>
+
+    {% if photos %}
+
+        {% for photo in photos %}
+
+            <div>
+
+                <img
+                    src="{{ photo.image.url }}"
+                    alt="{{ event.name }}"
+                    width="300"
+                >
+
+                <p>
+                    Processing status:
+                    <strong>
+                        {{ photo.get_processing_status_display }}
+                    </strong>
+                </p>
+
+            </div>
+
+            <hr>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>
+            No photos uploaded yet.
+        </p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{% url 'dashboard' %}">
+        ← Back to Dashboard
+    </a>
+
+</body>
+
+</html>

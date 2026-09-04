@@ -18,7 +18,9 @@
 
     <h1>Welcome to Photona</h1>
 
-    <h2>Welcome, {{ user.username }}</h2>
+    <h2>
+        Welcome, {{ user.username }}
+    </h2>
 
     <p>
         Tenant:
@@ -29,6 +31,52 @@
         Role:
         <strong>{{ user.get_role_display }}</strong>
     </p>
+
+    <hr>
+
+    <h2>My Events</h2>
+
+    <p>
+        <a href="{% url 'events:create' %}">
+            + Create Event
+        </a>
+    </p>
+
+    {% if events %}
+
+        <ul>
+
+            {% for event in events %}
+
+                <li>
+
+                    <strong>
+                        {{ event.name }}
+                    </strong>
+
+                    {% if event.event_date %}
+                        — {{ event.event_date }}
+                    {% endif %}
+
+                    &nbsp;
+
+                    <a href="{% url 'events:detail' event.id %}">
+                        View Event
+                    </a>
+
+                </li>
+
+            {% endfor %}
+
+        </ul>
+
+    {% else %}
+
+        <p>
+            You don't have any events yet.
+        </p>
+
+    {% endif %}
 
 </body>
 

@@ -42,28 +42,28 @@ def build_faiss_index(face_records):
     return index
 
 
-def save_faiss_index(index, event_name):
+def save_faiss_index(index, event_id):
     """
     Save FAISS index for a specific event.
     """
 
-    event_dir = get_event_database_dir(event_name)
+    event_dir = get_event_database_dir(event_id)
 
     file_path = event_dir / FAISS_INDEX_FILE
 
     faiss.write_index(index,str(file_path))
 
 
-def load_faiss_index(event_name):
+def load_faiss_index(event_id):
     """
     Load FAISS index for a specific event.
     """
 
-    event_dir = get_event_database_dir(event_name)
+    event_dir = get_event_database_dir(event_id)
 
     file_path = event_dir / FAISS_INDEX_FILE
 
     if not file_path.exists():
-        raise FileNotFoundError(f"FAISS index not found for event: {event_name}")
+        raise FileNotFoundError(f"FAISS index not found for event: {event_id}")
 
     return faiss.read_index(str(file_path))

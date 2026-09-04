@@ -65,7 +65,7 @@ VALID_IMAGE_EXTENSIONS = (
 # EVENT DATABASE DIRECTORY
 # =====================================================
 
-def get_event_database_dir(event_name):
+def get_event_database_dir(event_id: int) -> Path:
     """
     Return the database directory for a specific event.
 
@@ -78,7 +78,7 @@ def get_event_database_dir(event_name):
     database/Wedding/
     """
 
-    event_database_dir = DATABASE_DIR / event_name
+    event_database_dir = DATABASE_DIR / f"event_{event_id}"
 
     event_database_dir.mkdir(
         parents=True,
