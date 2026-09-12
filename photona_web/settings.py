@@ -134,6 +134,8 @@ AUTH_USER_MODEL = "accounts.User"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 # Celery Configuration
 
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"

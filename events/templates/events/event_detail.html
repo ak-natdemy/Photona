@@ -30,9 +30,9 @@
 
     <p>
         AI Status:
-        <strong>
-            {{ event.get_ai_status_display }}
-        </strong>
+        <span id="ai-status">
+            {{ event.ai_status|title }}
+        </span>
     </p>
 
     <hr>
@@ -72,9 +72,11 @@
 
                 <p>
                     Processing status:
-                    <strong>
+
+                    <strong id="photo-status-{{ photo.id }}">
                         {{ photo.get_processing_status_display }}
                     </strong>
+
                 </p>
 
             </div>
@@ -100,3 +102,119 @@
 </body>
 
 </html>
+
+<script>
+
+    const eventId = "{{ event.id }}";
+
+    const statusElement =
+        document.getElementById("ai-status");
+
+
+    function formatStatus(status) {
+
+        return status
+            .charAt(0)
+            .toUpperCase() + status.slice(1);
+
+    }
+
+
+    function checkAIStatus() {
+
+        fetch(`/events/${eventId}/status/`)
+
+            .then(response => {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Failed to fetch AI status"
+                    );
+
+                }
+
+                return response.json();
+
+            })
+
+            .then(data => {
+
+                /*
+                 * Update Event AI Status
+                 */
+
+                const status = data.ai_status;
+
+                statusElement.textContent =
+                    formatStatus(status);
+
+
+                /*
+                 * Update individual photo statuses
+                 */
+
+                data.photos.forEach(photo => {
+
+                    const photoStatusElement =
+                        document.getElementById(
+                            `photo-status-${photo.id}`
+                        );
+
+                    if (photoStatusElement) {
+
+                        photoStatusElement.textContent =
+                            formatStatus(
+                                photo.processing_status
+                            );
+
+                    }
+
+                });
+
+
+                /*
+                 * Stop polling when processing
+                 * has completely finished.
+                 */
+
+                if (
+                    status === "ready" ||
+                    status === "failed"
+                ) {
+
+                    clearInterval(statusInterval);
+
+                }
+
+            })
+
+            .catch(error => {
+
+                console.error(
+                    "Error checking AI status:",
+                    error
+                );
+
+            });
+
+    }
+
+
+    /*
+     * Check every 2 seconds.
+     */
+
+    const statusInterval = setInterval(
+        checkAIStatus,
+        2000
+    );
+
+
+    /*
+     * Check immediately when page loads.
+     */
+
+    checkAIStatus();
+
+</script>

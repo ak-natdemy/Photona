@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Event, EventPhoto
@@ -6,6 +7,8 @@ from .forms import (
     EventCreateForm,
     EventPhotoUploadForm,
 )
+
+from .tasks import process_event_photos_task
 
 
 @login_required
@@ -56,6 +59,10 @@ def upload_photos(request, event_id):
                     image=uploaded_file
                 )
 
+            process_event_photos_task.delay(
+                event.id
+            )
+
             return redirect(
                 "events:detail",
                 event_id=event.id
@@ -73,6 +80,7 @@ def upload_photos(request, event_id):
             "form": form,
         }
     )
+
 
 @login_required
 def create_event(request):
@@ -109,5 +117,34 @@ def create_event(request):
         "events/create_event.html",
         {
             "form": form,
+        }
+    )
+
+@login_required
+def event_ai_status(request, event_id):
+
+    event = get_object_or_404(
+        Event,
+        id=event_id,
+        tenant=request.user.tenant
+    )
+
+    photos = event.photos.all().order_by("id")
+
+    photo_statuses = []
+
+    for photo in photos:
+
+        photo_statuses.append(
+            {
+                "id": photo.id,
+                "processing_status": photo.processing_status,
+            }
+        )
+
+    return JsonResponse(
+        {
+            "ai_status": event.ai_status,
+            "photos": photo_statuses,
         }
     )

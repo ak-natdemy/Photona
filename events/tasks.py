@@ -1,28 +1,31 @@
 from celery import shared_task
 
+from events.models import Event
+from events.services import process_pending_event_photos
+
 
 @shared_task
 def test_celery_task():
     print("Photona Celery task executed successfully!")
-
     return "success"
 
 
 @shared_task
-def build_event_ai_database_task(event_id):
+def process_event_photos_task(event_id):
     """
-    Build the AI database for a Django event
-    in the background using Celery.
-    """
+    Process pending photos for an event in the background.
 
-    from events.models import Event
-    from events.services import build_event_ai_database
+    Parameters
+    ----------
+    event_id : int
+        ID of the event whose pending photos should be processed.
+    """
 
     event = Event.objects.get(
         id=event_id
     )
 
-    result = build_event_ai_database(
+    result = process_pending_event_photos(
         event
     )
 
