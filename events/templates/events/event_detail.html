@@ -49,6 +49,49 @@
 
     <hr>
 
+    <!-- Guest Access -->
+
+    <h2>Guest Access</h2>
+
+    <p>
+        Share this link with your guests so they can
+        find their photos.
+    </p>
+
+    <p>
+        <strong>Public Event Link:</strong>
+    </p>
+
+    <input
+        type="text"
+        id="public-event-link"
+        value="{{ request.scheme }}://{{ request.get_host }}{% url 'public_events:event' event.public_token %}"
+        readonly
+        size="70"
+    >
+
+    <p>
+
+        <button
+            type="button"
+            onclick="copyPublicEventLink()"
+        >
+            Copy Link
+        </button>
+
+        &nbsp;
+
+        <a
+            href="{% url 'public_events:event' event.public_token %}"
+            target="_blank"
+        >
+            Open Public Event
+        </a>
+
+    </p>
+
+    <hr>
+
     <!-- Event Photos -->
 
     <h2>Photos</h2>
@@ -99,122 +142,159 @@
         ← Back to Dashboard
     </a>
 
-</body>
+    <script>
 
-</html>
+        /*
+         * Public Event Link
+         */
 
-<script>
+        function copyPublicEventLink() {
 
-    const eventId = "{{ event.id }}";
+            const linkInput =
+                document.getElementById(
+                    "public-event-link"
+                );
 
-    const statusElement =
-        document.getElementById("ai-status");
+            navigator.clipboard.writeText(
+                linkInput.value
+            )
+            .then(() => {
 
-
-    function formatStatus(status) {
-
-        return status
-            .charAt(0)
-            .toUpperCase() + status.slice(1);
-
-    }
-
-
-    function checkAIStatus() {
-
-        fetch(`/events/${eventId}/status/`)
-
-            .then(response => {
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Failed to fetch AI status"
-                    );
-
-                }
-
-                return response.json();
+                alert(
+                    "Public event link copied!"
+                );
 
             })
-
-            .then(data => {
-
-                /*
-                 * Update Event AI Status
-                 */
-
-                const status = data.ai_status;
-
-                statusElement.textContent =
-                    formatStatus(status);
-
-
-                /*
-                 * Update individual photo statuses
-                 */
-
-                data.photos.forEach(photo => {
-
-                    const photoStatusElement =
-                        document.getElementById(
-                            `photo-status-${photo.id}`
-                        );
-
-                    if (photoStatusElement) {
-
-                        photoStatusElement.textContent =
-                            formatStatus(
-                                photo.processing_status
-                            );
-
-                    }
-
-                });
-
-
-                /*
-                 * Stop polling when processing
-                 * has completely finished.
-                 */
-
-                if (
-                    status === "ready" ||
-                    status === "failed"
-                ) {
-
-                    clearInterval(statusInterval);
-
-                }
-
-            })
-
             .catch(error => {
 
                 console.error(
-                    "Error checking AI status:",
+                    "Failed to copy public event link:",
                     error
                 );
 
             });
 
-    }
+        }
 
 
-    /*
-     * Check every 2 seconds.
-     */
+        /*
+         * AI Status Polling
+         */
 
-    const statusInterval = setInterval(
-        checkAIStatus,
-        2000
-    );
+        const eventId = "{{ event.id }}";
+
+        const statusElement =
+            document.getElementById("ai-status");
 
 
-    /*
-     * Check immediately when page loads.
-     */
+        function formatStatus(status) {
 
-    checkAIStatus();
+            return status
+                .charAt(0)
+                .toUpperCase() + status.slice(1);
 
-</script>
+        }
+
+
+        function checkAIStatus() {
+
+            fetch(`/events/${eventId}/status/`)
+
+                .then(response => {
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            "Failed to fetch AI status"
+                        );
+
+                    }
+
+                    return response.json();
+
+                })
+
+                .then(data => {
+
+                    /*
+                     * Update Event AI Status
+                     */
+
+                    const status = data.ai_status;
+
+                    statusElement.textContent =
+                        formatStatus(status);
+
+
+                    /*
+                     * Update individual photo statuses
+                     */
+
+                    data.photos.forEach(photo => {
+
+                        const photoStatusElement =
+                            document.getElementById(
+                                `photo-status-${photo.id}`
+                            );
+
+                        if (photoStatusElement) {
+
+                            photoStatusElement.textContent =
+                                formatStatus(
+                                    photo.processing_status
+                                );
+
+                        }
+
+                    });
+
+
+                    /*
+                     * Stop polling when processing
+                     * has completely finished.
+                     */
+
+                    if (
+                        status === "ready" ||
+                        status === "failed"
+                    ) {
+
+                        clearInterval(statusInterval);
+
+                    }
+
+                })
+
+                .catch(error => {
+
+                    console.error(
+                        "Error checking AI status:",
+                        error
+                    );
+
+                });
+
+        }
+
+
+        /*
+         * Check every 2 seconds.
+         */
+
+        const statusInterval = setInterval(
+            checkAIStatus,
+            2000
+        );
+
+
+        /*
+         * Check immediately when page loads.
+         */
+
+        checkAIStatus();
+
+    </script>
+
+</body>
+
+</html>
