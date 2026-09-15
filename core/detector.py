@@ -163,19 +163,14 @@ def process_query_image(
     """
     Process a query (selfie) image.
 
-    Parameters
-    ----------
-    image_path : str | Path
-        Path to the query image.
-
-    app : FaceAnalysis
-        Initialized InsightFace model.
-
     Returns
     -------
-    numpy.ndarray | None
-        Normalized face embedding.
-        Returns None if no valid face is found.
+    dict
+        {
+            "success": bool,
+            "status": str,
+            "embedding": numpy.ndarray | None
+        }
     """
 
     # --------------------------------------------------
@@ -184,18 +179,26 @@ def process_query_image(
 
     image = cv2.imread(str(image_path))
 
-
     if image is None:
 
-        print(f"Could not read image: {image_path}")
+        print(
+            f"Could not read image: {image_path}"
+        )
 
-        return None
+        return {
+            "success": False,
+            "status": "invalid_image",
+            "embedding": None,
+        }
 
     # --------------------------------------------------
     # Convert BGR -> RGB
     # --------------------------------------------------
 
-    image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(
+        image,
+        cv2.COLOR_BGR2RGB
+    )
 
     # --------------------------------------------------
     # Detect Faces
@@ -211,7 +214,11 @@ def process_query_image(
 
         print("No face detected.")
 
-        return None
+        return {
+            "success": False,
+            "status": "no_face",
+            "embedding": None,
+        }
 
     # --------------------------------------------------
     # Multiple Faces Found
@@ -219,21 +226,41 @@ def process_query_image(
 
     if len(faces) > 1:
 
-        print("Please upload an image containing only one face.")
+        print(
+            "Please upload an image containing only one face."
+        )
 
-        return None
+        return {
+            "success": False,
+            "status": "multiple_faces",
+            "embedding": None,
+        }
 
     # --------------------------------------------------
     # Get Face Embedding
     # --------------------------------------------------
 
-    query_embedding  = faces[0].embedding.astype(np.float32)
+    query_embedding = (
+        faces[0]
+        .embedding
+        .astype(np.float32)
+    )
 
-    query_embedding  = np.expand_dims(
-        query_embedding ,
+    query_embedding = np.expand_dims(
+        query_embedding,
         axis=0
     )
 
-    faiss.normalize_L2(query_embedding )
+    # --------------------------------------------------
+    # Normalize Embedding
+    # --------------------------------------------------
 
-    return query_embedding 
+    faiss.normalize_L2(
+        query_embedding
+    )
+
+    return {
+        "success": True,
+        "status": "success",
+        "embedding": query_embedding,
+    }

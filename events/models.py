@@ -1,6 +1,7 @@
 from django.db import models
 
 from tenants.models import Tenant
+import uuid
 
 
 class Event(models.Model):
@@ -18,6 +19,12 @@ class Event(models.Model):
     event_date = models.DateField(
         null=True,
         blank=True
+    )
+
+    public_token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
     )
 
     is_active = models.BooleanField(

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ event.name }}</title>
+
+</head>
+
+<body>
+
+    <h1>
+        {{ event.name }}
+    </h1>
+
+    <p>
+        Event Date:
+        {{ event.event_date|default:"Not specified" }}
+    </p>
+
+    <hr>
+
+    <h2>
+        Find Your Photos
+    </h2>
+
+    <p>
+        Upload a clear selfie containing only your face.
+    </p>
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+    >
+
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Find My Photos
+        </button>
+
+    </form>
+
+    {% if matching_photos %}
+
+        <hr>
+
+        <h2>
+            Your Photos
+        </h2>
+
+        <p>
+            We found {{ matching_photos|length }}
+            matching photo{{ matching_photos|length|pluralize }}.
+        </p>
+
+        {% for item in matching_photos %}
+
+            <div>
+
+                <img
+                    src="{{ item.photo.image.url }}"
+                    alt="Event photo"
+                    width="300"
+                >
+
+            </div>
+
+            <br>
+
+        {% endfor %}
+
+    {% elif form.is_bound and not form.errors %}
+
+        <hr>
+
+        <p>
+            We couldn't find any photos matching your selfie.
+        </p>
+
+    {% endif %}
+
+</body>
+
+</html>

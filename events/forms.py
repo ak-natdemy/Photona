@@ -43,3 +43,11 @@ class EventCreateForm(forms.ModelForm):
             "name",
             "event_date",
         ]
+
+
+class SelfieSearchForm(forms.Form):
+
+    selfie = forms.ImageField(
+        label="Upload your selfie",
+        required=True
+    )
