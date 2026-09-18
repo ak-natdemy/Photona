@@ -36,6 +36,7 @@
     </p>
 
     <form
+        id="selfie-search-form"
         method="post"
         enctype="multipart/form-data"
     >
@@ -44,11 +45,32 @@
 
         {{ form.as_p }}
 
-        <button type="submit">
+        <button
+            type="submit"
+            id="search-button"
+        >
             Find My Photos
         </button>
 
     </form>
+
+    <!-- Search Loading Message -->
+
+    <div
+        id="search-loading"
+        style="display: none;"
+    >
+
+        <p>
+            🔍 Searching your photos...
+        </p>
+
+        <p>
+            Please wait while Photona finds your photos.
+        </p>
+
+    </div>
+
 
     {% if matching_photos %}
 
@@ -60,7 +82,8 @@
 
         <p>
             We found {{ matching_photos|length }}
-            matching photo{{ matching_photos|length|pluralize }}.
+            photo{{ matching_photos|length|pluralize }}
+            containing you.
         </p>
 
         {% for item in matching_photos %}
@@ -88,6 +111,60 @@
         </p>
 
     {% endif %}
+
+
+    <script>
+
+        /*
+         * Guest Selfie Search
+         */
+
+        const searchForm =
+            document.getElementById(
+                "selfie-search-form"
+            );
+
+        const searchButton =
+            document.getElementById(
+                "search-button"
+            );
+
+        const searchLoading =
+            document.getElementById(
+                "search-loading"
+            );
+
+
+        searchForm.addEventListener(
+            "submit",
+            function () {
+
+                /*
+                 * Show loading message
+                 */
+
+                searchLoading.style.display =
+                    "block";
+
+
+                /*
+                 * Prevent multiple submissions
+                 */
+
+                searchButton.disabled = true;
+
+
+                /*
+                 * Update button text
+                 */
+
+                searchButton.textContent =
+                    "Searching...";
+
+            }
+        );
+
+    </script>
 
 </body>
 

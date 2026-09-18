@@ -1,48 +1,145 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Create Photona Account</title>
 
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
 </head>
 
 <body>
 
-    <h1>Create your Photona account</h1>
+    <main>
+        <section>
 
-    <p>
-        Register your photography business or studio.
-    </p>
+            <h1>Create your Photona account</h1>
 
-    <form method="post">
+            <p>Register your photography business or studio.</p>
 
-        {% csrf_token %}
+            <form method="post" id="registration-form" autocomplete="off">
 
-        {{ form.as_p }}
+                {% csrf_token %}
 
-        <button type="submit">
-            Create Account
-        </button>
+                <!-- Username -->
+                <div>
+                    <label for="{{ form.username.id_for_label }}">
+                        Username
+                    </label>
 
-    </form>
+                    {{ form.username }}
 
-    <br>
+                    {% if form.username.errors %}
+                        <div>
+                            {{ form.username.errors }}
+                        </div>
+                    {% endif %}
+                </div>
 
-    <p>
-        Already have an account?
-        <a href="{% url 'login' %}">
-            Login
-        </a>
-    </p>
+                <!-- Email -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}">
+                        Email
+                    </label>
+
+                    {{ form.email }}
+
+                    <small id="email-validation-message"></small>
+
+                    {% if form.email.errors %}
+                        <div>
+                            {{ form.email.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="{{ form.password.id_for_label }}">
+                        Password
+                    </label>
+
+                    <div>
+                        {{ form.password }}
+
+                        <button type="button" id="toggle-password">
+                            Show
+                        </button>
+                    </div>
+
+                    <small id="password-strength"></small>
+
+                    {% if form.password.errors %}
+                        <div>
+                            {{ form.password.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="{{ form.password_confirm.id_for_label }}">
+                        Confirm Password
+                    </label>
+
+                    <div>
+                        {{ form.password_confirm }}
+
+                        <button type="button" id="toggle-password-confirm">
+                            Show
+                        </button>
+                    </div>
+
+                    <small id="password-match-message"></small>
+
+                    {% if form.password_confirm.errors %}
+                        <div>
+                            {{ form.password_confirm.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Business Name -->
+                <div>
+                    <label for="{{ form.tenant_name.id_for_label }}">
+                        Business / Studio Name
+                    </label>
+
+                    {{ form.tenant_name }}
+
+                    {% if form.tenant_name.errors %}
+                        <div>
+                            {{ form.tenant_name.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Non-field errors -->
+                {% if form.non_field_errors %}
+                    <div>
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <button type="submit" id="register-button">
+                    Create Account
+                </button>
+
+            </form>
+
+            <p>
+                Already have an account?
+                <a href="{% url 'login' %}">Login</a>
+            </p>
+
+        </section>
+    </main>
+
+    <script src="{% static 'js/register.js' %}"></script>
 
 </body>
-
 </html>

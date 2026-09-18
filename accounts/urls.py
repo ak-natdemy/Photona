@@ -4,6 +4,8 @@ from .views import (
     login_view,
     dashboard,
     register_view,
+    logout_view,
+    dashboard_stats,
 )
 
 
@@ -25,6 +27,18 @@ urlpatterns = [
         "dashboard/",
         dashboard,
         name="dashboard"
+    ),
+
+    path(
+        "logout/",
+        logout_view,
+        name="logout"
+    ),
+
+    path(
+        "dashboard/stats/",
+        dashboard_stats,
+        name="dashboard_stats",
     ),
 
 ]

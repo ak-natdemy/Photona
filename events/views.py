@@ -16,6 +16,9 @@ import logging
 import os
 import tempfile
 
+from django.conf import settings
+from core.qr import generate_qr_code
+
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -27,7 +30,18 @@ def event_detail(request, event_id):
         tenant=request.user.tenant
     )
 
-    photos = event.photos.all().order_by("-uploaded_at")
+    photos = event.photos.all().order_by(
+        "-uploaded_at"
+    )
+
+    public_event_url = (
+        f"{settings.SITE_URL}"
+        f"/e/{event.public_token}/"
+    )
+
+    qr_code = generate_qr_code(
+        public_event_url
+    )
 
     return render(
         request,
@@ -35,6 +49,8 @@ def event_detail(request, event_id):
         {
             "event": event,
             "photos": photos,
+            "public_event_url": public_event_url,
+            "qr_code": qr_code,
         }
     )
 

@@ -1,0 +1,327 @@
+/* ============================================================
+   Photona — Registration Page
+   Exact match to reference design: gradient panel (left) +
+   floating white card (right). Card is sized to fit the
+   viewport with no scrolling.
+
+   NOTE: the reference HTML has no markup for the left branding
+   panel (logo / "Hey, Hello!" / description) — since the HTML
+   must not change, that panel is generated here with CSS
+   pseudo-elements (body::before / body::after / main::before /
+   main::after). It's decorative only; screen readers will not
+   see it, since it isn't real content in the document.
+   ============================================================ */
+
+:root {
+    --primary-start: #FFBF00;
+    --primary-end: #FFA200;
+    --card-bg: #ffffff;
+    --text-dark: #1e1b3a;
+    --text-muted: #6b6784;
+    --input-border: #f0e2c2;
+    --input-bg: #fdf8ec;
+    --button-primary: #FFBF00;
+    --button-primary-hover: #E6AC00;
+    --error-red: #e0245e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+    color: var(--text-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+/* ---------- Decorative left branding panel (generated, no HTML change) ---------- */
+
+body::before {
+    content: "🗨 Pagedone";
+    position: fixed;
+    left: 17%;
+    top: 30%;
+    font-size: clamp(16px, 1.6vw, 20px);
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.2px;
+}
+
+body::after {
+    content: "Hey, Hello!";
+    position: fixed;
+    left: 17%;
+    top: 37%;
+    font-size: clamp(28px, 3.4vw, 40px);
+    font-weight: 700;
+    color: #ffffff;
+}
+
+main::before {
+    content: "Join the waitlist for the design system!";
+    position: fixed;
+    left: 17%;
+    top: 48%;
+    max-width: 320px;
+    font-size: clamp(13px, 1.1vw, 15px);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+main::after {
+    content: "We provide all the advantages that can simplify all your financial transactions without any further requirements.";
+    position: fixed;
+    left: 17%;
+    top: 54%;
+    max-width: 300px;
+    font-size: clamp(12px, 1vw, 13px);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 900px) {
+    body::before,
+    body::after,
+    main::before,
+    main::after {
+        display: none;
+    }
+
+    body {
+        overflow: auto;
+    }
+}
+
+/* ---------- Card / form ---------- */
+
+main {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100vh;
+    padding: 2vh 18% 2vh 0;
+}
+
+main > section {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 480px;
+    max-height: 96vh;
+    overflow: hidden;
+    border-radius: 24px;
+    padding: clamp(20px, 3vh, 36px) clamp(24px, 3vw, 36px);
+    box-shadow: 0 30px 60px rgba(20, 10, 70, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 900px) {
+    main {
+        justify-content: center;
+        padding: 24px 16px;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    main > section {
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+h1 {
+    font-size: clamp(18px, 2vh, 24px);
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--text-dark);
+    line-height: 1.25;
+}
+
+main > section > p:first-of-type {
+    margin: 0 0 clamp(12px, 2vh, 20px);
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+form div {
+    margin-bottom: clamp(8px, 1.6vh, 14px);
+}
+
+label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: clamp(9px, 1.5vh, 12px) 14px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+    color: #a8a5bd;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-color: var(--primary-start);
+    background: #ffffff;
+}
+
+/* Password field wrapper (holds input + show/hide button) */
+form div > div {
+    position: relative;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+form div > div input {
+    padding-right: 60px;
+}
+
+#toggle-password,
+#toggle-password-confirm {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    color: var(--primary-end);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px;
+}
+
+#toggle-password:hover,
+#toggle-password-confirm:hover {
+    text-decoration: underline;
+}
+
+small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+#password-strength:empty,
+#email-validation-message:empty,
+#password-match-message:empty {
+    margin-top: 0;
+}
+
+/* Field-level Django error messages */
+form div > div:not(:first-child) {
+    /* keep default */
+}
+
+.errorlist,
+form > div > div:has(ul) {
+    color: var(--error-red);
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+form ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: var(--error-red);
+    font-size: 12px;
+}
+
+/* Non-field errors */
+form > div:has(ul):last-of-type {
+    background: #fdeef1;
+    border: 1px solid #f6c6d3;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+}
+
+#register-button {
+    width: 100%;
+    padding: clamp(10px, 1.8vh, 14px);
+    background: var(--button-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background 0.15s ease, transform 0.05s ease;
+}
+
+#register-button:hover {
+    background: var(--button-primary-hover);
+}
+
+#register-button:active {
+    transform: translateY(1px);
+}
+
+main > section > p:last-child {
+    text-align: center;
+    margin: clamp(10px, 2vh, 18px) 0 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+main > section > p:last-child a {
+    color: var(--primary-end);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+main > section > p:last-child a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    main > section {
+        padding: 36px 26px;
+        border-radius: 18px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+}
+
+/* ---------- Accessibility ---------- */
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--primary-start);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}

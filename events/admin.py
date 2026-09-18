@@ -49,7 +49,6 @@ class EventAdmin(admin.ModelAdmin):
         "name",
         "tenant__name",
     )
-    
     actions = [
         process_selected_events
     ]

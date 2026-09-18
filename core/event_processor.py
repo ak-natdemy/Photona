@@ -33,8 +33,7 @@ def get_image_files(
             f"Folder not found: {event_folder}"
         )
 
-    image_files = [ file for file in event_folder.iterdir() if file.is_file() 
-                   and file.suffix.lower() in VALID_IMAGE_EXTENSIONS]
+    image_files = [file for file in event_folder.iterdir() if file.is_file()]
 
     image_files.sort()
 

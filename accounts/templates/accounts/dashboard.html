@@ -1,82 +1,469 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <title>Dashboard | Photona</title>
 
-    <title>Photona Dashboard</title>
-
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 </head>
 
 <body>
 
-    <h1>Welcome to Photona</h1>
+    <div class="dashboard">
 
-    <h2>
-        Welcome, {{ user.username }}
-    </h2>
+        <!-- =====================================================
+             SIDEBAR
+        ====================================================== -->
 
-    <p>
-        Tenant:
-        <strong>{{ tenant.name }}</strong>
-    </p>
+        <aside class="sidebar">
 
-    <p>
-        Role:
-        <strong>{{ user.get_role_display }}</strong>
-    </p>
+            <div class="sidebar-logo">
+                PHOTONA
+            </div>
 
-    <hr>
+            <nav class="sidebar-nav">
 
-    <h2>My Events</h2>
+                <a
+                    href="{% url 'dashboard' %}"
+                    class="nav-item active"
+                >
+                    Dashboard
+                </a>
 
-    <p>
-        <a href="{% url 'events:create' %}">
-            + Create Event
-        </a>
-    </p>
+                <a
+                    href="{% url 'events:create' %}"
+                    class="nav-item"
+                >
+                    Create Event
+                </a>
 
-    {% if events %}
+            </nav>
 
-        <ul>
+            <div class="sidebar-bottom">
 
-            {% for event in events %}
+                <a
+                    href="#"
+                    class="nav-item"
+                >
+                    Settings
+                </a>
 
-                <li>
+                <a
+                    href="{% url 'logout' %}"
+                    class="nav-item logout-link"
+                >
+                    Logout
+                </a>
 
-                    <strong>
-                        {{ event.name }}
-                    </strong>
+            </div>
 
-                    {% if event.event_date %}
-                        — {{ event.event_date }}
-                    {% endif %}
+        </aside>
 
-                    &nbsp;
 
-                    <a href="{% url 'events:detail' event.id %}">
-                        View Event
+        <!-- =====================================================
+             MAIN CONTENT
+        ====================================================== -->
+
+        <main class="main-content">
+
+
+            <!-- =================================================
+                 TOPBAR
+            ================================================== -->
+
+            <header class="topbar">
+
+                <div class="topbar-left">
+
+                    <h1>
+                        Dashboard
+                    </h1>
+
+                    <p>
+                        Manage your events and photos.
+                    </p>
+
+                </div>
+
+
+                <div class="user-info">
+
+                    <div class="user-avatar">
+                        {{ user.username|first|upper }}
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {{ user.username }}
+                        </strong>
+
+                        <small>
+                            {{ user.get_role_display }}
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+
+            <!-- =================================================
+                 WELCOME SECTION
+            ================================================== -->
+
+            <section class="welcome-section">
+
+                <h2>
+                    Welcome back, {{ user.username }} 👋
+                </h2>
+
+                <p>
+                    Manage your photography events and find your
+                    clients' photos easily.
+                </p>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 DASHBOARD STATISTICS
+            ================================================== -->
+
+            <section class="stats-grid">
+
+
+                <!-- TOTAL EVENTS -->
+
+                <div class="stat-card">
+
+                    <div class="stat-content">
+
+                        <span class="stat-label">
+                            Total Events
+                        </span>
+
+                        <strong
+                            class="stat-value"
+                            id="total-events"
+                        >
+                            {{ total_events }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- ACTIVE EVENTS -->
+
+                <div class="stat-card">
+
+                    <div class="stat-content">
+
+                        <span class="stat-label">
+                            Active Events
+                        </span>
+
+                        <strong
+                            class="stat-value"
+                            id="active-events"
+                        >
+                            {{ active_events }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TOTAL PHOTOS -->
+
+                <div class="stat-card">
+
+                    <div class="stat-content">
+
+                        <span class="stat-label">
+                            Total Photos
+                        </span>
+
+                        <strong
+                            class="stat-value"
+                            id="total-photos"
+                        >
+                            {{ total_photos }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- PROCESSING PHOTOS -->
+
+                <div class="stat-card">
+
+                    <div class="stat-content">
+
+                        <span class="stat-label">
+                            Processing Photos
+                        </span>
+
+                        <strong
+                            class="stat-value"
+                            id="processing-photos"
+                        >
+                            {{ processing_photos }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================================
+                 EVENTS SECTION
+            ================================================== -->
+
+            <section class="events-section">
+
+
+                <div class="section-header">
+
+                    <div>
+
+                        <h2>
+                            My Events
+                        </h2>
+
+                        <p>
+                            Your photography events
+                        </p>
+
+                    </div>
+
+
+                    <a
+                        href="{% url 'events:create' %}"
+                        class="create-event-button"
+                    >
+                        + Create Event
                     </a>
 
-                </li>
+                </div>
 
-            {% endfor %}
 
-        </ul>
 
-    {% else %}
+                {% if events %}
 
-        <p>
-            You don't have any events yet.
-        </p>
+                    <div class="events-grid">
 
-    {% endif %}
+
+                        {% for event in events %}
+
+                            <article
+                                class="event-card"
+                                data-event-id="{{ event.id }}"
+                                data-status-url="{% url 'events:ai_status' event.id %}"
+                            >
+
+
+                                <!-- EVENT CONTENT -->
+
+                                <div class="event-card-content">
+
+
+                                    <h3>
+                                        {{ event.name }}
+                                    </h3>
+
+
+                                    {% if event.event_date %}
+
+                                        <p class="event-date">
+                                            {{ event.event_date }}
+                                        </p>
+
+                                    {% else %}
+
+                                        <p class="event-date">
+                                            Date not specified
+                                        </p>
+
+                                    {% endif %}
+
+
+
+                                    <!-- PHOTO COUNT -->
+
+                                    <p class="event-photo-count">
+
+                                        <strong data-photo-count>
+                                            {{ event.photo_count }}
+                                        </strong>
+
+                                        <span data-photo-label>
+                                            photo{{ event.photo_count|pluralize }}
+                                        </span>
+
+                                    </p>
+
+
+
+                                    <!-- AI STATUS -->
+
+                                    <p class="event-ai-status">
+
+                                        <span>
+                                            AI Status:
+                                        </span>
+
+                                        <strong
+                                            class="ai-status-value"
+                                            data-ai-status
+                                        >
+
+                                            {% if event.ai_status == "ready" %}
+
+                                                <span class="status-ready">
+                                                    ● Ready
+                                                </span>
+
+                                            {% elif event.ai_status == "processing" %}
+
+                                                <span class="status-processing">
+                                                    ● Processing
+                                                </span>
+
+                                            {% elif event.ai_status == "failed" %}
+
+                                                <span class="status-failed">
+                                                    ● Failed
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="status-pending">
+                                                    ● Waiting
+                                                </span>
+
+                                            {% endif %}
+
+                                        </strong>
+
+                                    </p>
+
+
+
+                                    <!-- ACTIVE STATUS -->
+
+                                    {% if event.is_active %}
+
+                                        <p class="event-active-status">
+                                            Active
+                                        </p>
+
+                                    {% else %}
+
+                                        <p class="event-active-status inactive">
+                                            Inactive
+                                        </p>
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+
+                                <!-- EVENT FOOTER -->
+
+                                <div class="event-card-footer">
+
+
+                                    <a
+                                        href="{% url 'events:detail' event.id %}"
+                                        class="view-event-button"
+                                    >
+                                        View Event →
+                                    </a>
+
+
+                                    <a
+                                        href="{% url 'events:upload_photos' event.id %}"
+                                        class="upload-photos-button"
+                                    >
+                                        Upload Photos
+                                    </a>
+
+
+                                </div>
+
+
+                            </article>
+
+                        {% endfor %}
+
+
+                    </div>
+
+
+                {% else %}
+
+
+                    <!-- EMPTY EVENTS -->
+
+                    <div class="empty-events">
+
+                        <h3>
+                            No events yet
+                        </h3>
+
+                        <p>
+                            Create your first event to start
+                            uploading and managing photos.
+                        </p>
+
+                        <a
+                            href="{% url 'events:create' %}"
+                            class="create-event-button"
+                        >
+                            + Create Your First Event
+                        </a>
+
+                    </div>
+
+
+                {% endif %}
+
+
+            </section>
+
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================================================
+         DASHBOARD JAVASCRIPT
+    ========================================================== -->
+
+    <script src="{% static 'js/dashboard.js' %}"></script>
 
 </body>
 

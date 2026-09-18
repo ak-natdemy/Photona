@@ -1,53 +1,114 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Photona Login</title>
+    <title>Login | Photona</title>
+
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
 </head>
 
 <body>
 
-    <h1>Photona</h1>
+    <main>
 
-    <h2>Login</h2>
+        <section>
 
-    {% if error %}
-        <p>{{ error }}</p>
-    {% endif %}
+            <h1>PHOTONA</h1>
 
-    <form method="POST">
+            <h2>Welcome Back</h2>
 
-        {% csrf_token %}
+            <p>Login to your Photona account.</p>
 
-        <div>
-            <label>Username</label>
-            <input
-                type="text"
-                name="username"
-                required
-            >
-        </div>
 
-        <br>
+            <!-- Login Error -->
+            {% if error %}
+                <div class="login-error">
+                    {{ error }}
+                </div>
+            {% endif %}
 
-        <div>
-            <label>Password</label>
-            <input
-                type="password"
-                name="password"
-                required
-            >
-        </div>
 
-        <br>
+            <!-- Login Form -->
+            <form method="post" id="login-form">
 
-        <button type="submit">
-            Login
-        </button>
+                {% csrf_token %}
 
-    </form>
+                <!-- Username -->
+                <div>
+                    <label for="username">
+                        Username
+                    </label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+
+
+                <!-- Password -->
+                <div>
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                        >
+
+                        <button
+                            type="button"
+                            id="toggle-password"
+                        >
+                            Show
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Login Button -->
+                <button
+                    type="submit"
+                    id="login-button"
+                >
+                    Login
+                </button>
+
+            </form>
+
+
+            <!-- Register Link -->
+            <p>
+                Don't have an account?
+                <a href="{% url 'register' %}">
+                    Create Account
+                </a>
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <script src="{% static 'js/login.js' %}"></script>
 
 </body>
+
 </html>

@@ -65,7 +65,7 @@
     <input
         type="text"
         id="public-event-link"
-        value="{{ request.scheme }}://{{ request.get_host }}{% url 'public_events:event' event.public_token %}"
+        value="{{ public_event_url }}"
         readonly
         size="70"
     >
@@ -82,13 +82,27 @@
         &nbsp;
 
         <a
-            href="{% url 'public_events:event' event.public_token %}"
+            href="{{ public_event_url }}"
             target="_blank"
         >
             Open Public Event
         </a>
 
     </p>
+
+    <br>
+
+    <h3>Scan to Find Photos</h3>
+
+    <p>
+        Guests can scan this QR code to open the event.
+    </p>
+
+    <img
+        src="data:image/png;base64,{{ qr_code }}"
+        alt="QR code for {{ event.name }}"
+        width="250"
+    >
 
     <hr>
 
@@ -142,10 +156,11 @@
         ← Back to Dashboard
     </a>
 
+
     <script>
 
         /*
-         * Public Event Link
+         * Copy Public Event Link
          */
 
         function copyPublicEventLink() {
