@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ event.name }} | Photona Portal</title>
+    <link rel="stylesheet" href="{% static 'css/public_event.css' %}?v=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="guest-portal-body">
+    <div class="guest-container">
+        <header class="guest-header">
+            <div class="brand-badge">
+                <div class="brand-logo-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="brand-title-wrap">
+                    <span class="brand-title">PHOTONA</span>
+                    <span class="brand-tagline">AI Studio Portal</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="guest-main">
+            <div class="unavailable-card">
+                <div class="unavailable-icon-ring">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <h2>Event Portal In Preparation</h2>
+                <p class="unavailable-lead">The gallery for <strong>{{ event.name }}</strong> is currently indexing event photos with Photona AI face recognition.</p>
+                <div class="status-pill status-{{ event.ai_status }}">
+                    <span class="status-dot pulse"></span>
+                    <span>AI Status: {{ event.ai_status|title }}</span>
+                </div>
+                <p class="unavailable-sub">Please check back in a few moments once the photographer has finished uploading and processing the event photos.</p>
+                <button type="button" onclick="window.location.reload()" class="btn-primary-guest">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                    </svg>
+                    <span>Check Again</span>
+                </button>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

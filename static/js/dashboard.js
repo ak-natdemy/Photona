@@ -1,583 +1,370 @@
+/* ============================================================
+   PHOTONA - DASHBOARD LOGIC, POLLING & MODAL INTERACTIONS (v3.3)
+   ============================================================ */
+
 document.addEventListener("DOMContentLoaded", function () {
 
-    console.log("Photona Dashboard JS Loaded");
-
-
     /* =========================================================
-       MOBILE SIDEBAR
+       MODAL CONTROLLER (Create, Edit, Delete)
     ========================================================== */
 
-    const sidebar =
-        document.querySelector(".sidebar");
-
-    const menuButton =
-        document.querySelector(".mobile-menu-button");
-
-    const sidebarOverlay =
-        document.querySelector(".sidebar-overlay");
-
-
-    function openSidebar() {
-
-        if (!sidebar) {
-            return;
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add("active");
+            modal.setAttribute("aria-hidden", "false");
+            const firstInput = modal.querySelector("input:not([type=hidden]), textarea");
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 80);
+            }
         }
-
-        sidebar.classList.add(
-            "sidebar-open"
-        );
-
-        if (sidebarOverlay) {
-
-            sidebarOverlay.classList.add(
-                "overlay-visible"
-            );
-
-        }
-
     }
 
-
-    function closeSidebar() {
-
-        if (!sidebar) {
-            return;
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove("active");
+            modal.setAttribute("aria-hidden", "true");
         }
-
-        sidebar.classList.remove(
-            "sidebar-open"
-        );
-
-        if (sidebarOverlay) {
-
-            sidebarOverlay.classList.remove(
-                "overlay-visible"
-            );
-
-        }
-
     }
 
+    // Trigger buttons for Create Event Modal
+    document.querySelectorAll(".btn-trigger-create-event, [data-open-modal='create-event-modal']").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            openModal("create-event-modal");
+        });
+    });
 
-    if (menuButton) {
+    // Close button listeners
+    document.querySelectorAll("[data-close-modal]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            const modalId = btn.getAttribute("data-close-modal");
+            closeModal(modalId);
+        });
+    });
 
-        menuButton.addEventListener(
-            "click",
-            function () {
+    // Backdrop click to close
+    document.querySelectorAll(".modal-dialog-backdrop").forEach(function (backdrop) {
+        backdrop.addEventListener("click", function (e) {
+            if (e.target === backdrop) {
+                backdrop.classList.remove("active");
+                backdrop.setAttribute("aria-hidden", "true");
+            }
+        });
+    });
 
-                if (
-                    sidebar.classList.contains(
-                        "sidebar-open"
-                    )
-                ) {
+    // Keyboard ESC key to close
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            document.querySelectorAll(".modal-dialog-backdrop.active").forEach(function (modal) {
+                modal.classList.remove("active");
+                modal.setAttribute("aria-hidden", "true");
+            });
+        }
+    });
 
-                    closeSidebar();
+    // Edit Event button handler (Point 7 Fix)
+    const editModal = document.getElementById("edit-event-modal");
+    const editForm = document.getElementById("edit-event-form");
+    const editNameInput = document.getElementById("edit_event_name");
+    const editDescInput = document.getElementById("edit_event_desc");
+    const editDateInput = document.getElementById("edit_event_date");
+    let currentEditingEventId = null;
 
+    document.querySelectorAll(".btn-trigger-edit-event").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const editUrl = btn.getAttribute("data-edit-url");
+            const eventId = btn.getAttribute("data-event-id");
+            const name = btn.getAttribute("data-event-name") || "";
+            const desc = btn.getAttribute("data-event-desc") || "";
+            const date = btn.getAttribute("data-event-date") || "";
+
+            currentEditingEventId = eventId;
+
+            if (editForm) {
+                editForm.action = editUrl;
+            }
+            if (editNameInput) editNameInput.value = name;
+            if (editDescInput) editDescInput.value = desc;
+            if (editDateInput) editDateInput.value = date;
+
+            openModal("edit-event-modal");
+        });
+    });
+
+    // AJAX submit for Edit Event on Dashboard for seamless experience
+    if (editForm) {
+        editForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const submitBtn = editForm.querySelector("button[type=submit]");
+            if (submitBtn) submitBtn.disabled = true;
+
+            const formData = new FormData(editForm);
+
+            try {
+                const response = await fetch(editForm.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // Dynamically update card on dashboard
+                        if (currentEditingEventId) {
+                            const titleEl = document.getElementById(`card-title-${currentEditingEventId}`);
+                            const descEl = document.getElementById(`card-desc-${currentEditingEventId}`);
+                            const dateEl = document.getElementById(`card-date-${currentEditingEventId}`);
+                            const thumbEl = document.getElementById(`card-thumb-${currentEditingEventId}`);
+
+                            if (titleEl) titleEl.textContent = data.name;
+                            if (descEl) {
+                                descEl.textContent = data.description || "No event description provided";
+                                if (data.description) descEl.classList.remove("text-muted-empty");
+                                else descEl.classList.add("text-muted-empty");
+                            }
+                            if (dateEl) {
+                                dateEl.textContent = data.event_date || "Date not set";
+                            }
+                            if (thumbEl && data.thumbnail_url) {
+                                thumbEl.src = data.thumbnail_url;
+                            }
+                        }
+                        closeModal("edit-event-modal");
+                    }
                 } else {
-
-                    openSidebar();
-
+                    // Fallback to normal form submit if needed
+                    editForm.submit();
                 }
-
+            } catch (err) {
+                // Fallback normal submit
+                editForm.submit();
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
-        );
-
+        });
     }
 
+    // Delete Event button handler
+    const deleteForm = document.getElementById("delete-event-form");
+    const deleteModalEventName = document.getElementById("delete-modal-event-name");
 
+    document.querySelectorAll(".btn-trigger-delete-event").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const deleteUrl = btn.getAttribute("data-delete-url");
+            const eventName = btn.getAttribute("data-event-name") || "this event";
 
-    /* =========================================================
-       SIDEBAR NAVIGATION
-    ========================================================== */
-
-    const navigationItems =
-        document.querySelectorAll(
-            ".nav-item"
-        );
-
-
-    navigationItems.forEach(
-        function (item) {
-
-            item.addEventListener(
-                "click",
-                function () {
-
-                    closeSidebar();
-
-                }
-            );
-
-        }
-    );
-
-
-
-    /* =========================================================
-       LOGOUT CONFIRMATION
-    ========================================================== */
-
-    const logoutLink =
-        document.querySelector(
-            ".logout-link"
-        );
-
-
-    if (logoutLink) {
-
-        logoutLink.addEventListener(
-            "click",
-            function (event) {
-
-                event.preventDefault();
-
-
-                const confirmLogout =
-                    window.confirm(
-                        "Are you sure you want to logout?"
-                    );
-
-
-                if (confirmLogout) {
-
-                    window.location.href =
-                        logoutLink.href;
-
-                }
-
+            if (deleteForm) {
+                deleteForm.action = deleteUrl;
             }
-        );
+            if (deleteModalEventName) {
+                deleteModalEventName.textContent = `"${eventName}"`;
+            }
 
+            openModal("delete-event-modal");
+        });
+    });
+
+    // Mobile Sidebar Toggle
+    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebar-overlay");
+
+    if (mobileMenuBtn && sidebar) {
+        mobileMenuBtn.addEventListener("click", function () {
+            sidebar.classList.toggle("open");
+            if (sidebarOverlay) sidebarOverlay.classList.toggle("active");
+        });
     }
 
-
-
-    /* =========================================================
-       ESC KEY
-    ========================================================== */
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (event.key === "Escape") {
-
-                closeSidebar();
-
-            }
-
-        }
-    );
-
-
+    if (sidebarOverlay && sidebar) {
+        sidebarOverlay.addEventListener("click", function () {
+            sidebar.classList.remove("open");
+            sidebarOverlay.classList.remove("active");
+        });
+    }
 
     /* =========================================================
-       WINDOW RESIZE
+       STATISTICS REFRESH
     ========================================================== */
-
-    window.addEventListener(
-        "resize",
-        function () {
-
-            if (window.innerWidth > 650) {
-
-                closeSidebar();
-
-            }
-
-        }
-    );
-
-
-
-    /* =========================================================
-       DASHBOARD STATISTICS
-    ========================================================== */
-
-    const totalEventsElement =
-        document.getElementById(
-            "total-events"
-        );
-
-    const activeEventsElement =
-        document.getElementById(
-            "active-events"
-        );
-
-    const totalPhotosElement =
-        document.getElementById(
-            "total-photos"
-        );
-
-    const processingPhotosElement =
-        document.getElementById(
-            "processing-photos"
-        );
-
-
-
-    /*
-     * Django URL for dashboard statistics.
-     *
-     * Example:
-     * /dashboard/stats/
-     */
-
-    const dashboardStatsUrl =
-        "/dashboard/stats/";
-
-
+    const totalEventsElement = document.getElementById("total-events");
+    const activeEventsElement = document.getElementById("active-events");
+    const totalPhotosElement = document.getElementById("total-photos");
+    const processingPhotosElement = document.getElementById("processing-photos");
 
     function updateDashboardStatistics() {
-
-        fetch(
-            dashboardStatsUrl,
-            {
-                method: "GET",
-
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
+        fetch("/dashboard/stats/", {
+            method: "GET",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
             }
-        )
-
-        .then(
-            function (response) {
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Failed to fetch dashboard statistics."
-                    );
-
-                }
-
-                return response.json();
-
+        })
+        .then(function (response) {
+            if (!response.ok) throw new Error("Stats request failed");
+            return response.json();
+        })
+        .then(function (data) {
+            if (totalEventsElement && data.total_events !== undefined) {
+                totalEventsElement.textContent = data.total_events;
             }
-        )
-
-        .then(
-            function (data) {
-
-
-                /* ==============================
-                   TOTAL EVENTS
-                =============================== */
-
-                if (totalEventsElement) {
-
-                    totalEventsElement.textContent =
-                        data.total_events;
-
-                }
-
-
-
-                /* ==============================
-                   ACTIVE EVENTS
-                =============================== */
-
-                if (activeEventsElement) {
-
-                    activeEventsElement.textContent =
-                        data.active_events;
-
-                }
-
-
-
-                /* ==============================
-                   TOTAL PHOTOS
-                =============================== */
-
-                if (totalPhotosElement) {
-
-                    totalPhotosElement.textContent =
-                        data.total_photos;
-
-                }
-
-
-
-                /* ==============================
-                   PROCESSING PHOTOS
-                =============================== */
-
-                if (processingPhotosElement) {
-
-                    processingPhotosElement.textContent =
-                        data.processing_photos;
-
-                }
-
+            if (activeEventsElement && data.active_events !== undefined) {
+                activeEventsElement.textContent = data.active_events;
             }
-        )
-
-        .catch(
-            function (error) {
-
-                console.error(
-                    "Dashboard statistics update failed:",
-                    error
-                );
-
+            if (totalPhotosElement && data.total_photos !== undefined) {
+                totalPhotosElement.textContent = data.total_photos;
             }
-        );
-
+            if (processingPhotosElement && data.processing_photos !== undefined) {
+                processingPhotosElement.textContent = data.processing_photos;
+            }
+        })
+        .catch(function () {});
     }
-
-
-
-    /* =========================================================
-       INITIAL DASHBOARD STATISTICS CHECK
-    ========================================================== */
 
     updateDashboardStatistics();
-
-
-
-    /* =========================================================
-       AUTOMATIC DASHBOARD STATISTICS REFRESH
-    ========================================================== */
-
-    setInterval(
-        function () {
-
-            updateDashboardStatistics();
-
-        },
-        5000
-    );
-
+    setInterval(updateDashboardStatistics, 6000);
 
 
     /* =========================================================
-       EVENT CARDS
+       GENERIC MODAL OPENER (Supports plans-modal & others)
     ========================================================== */
-
-    const eventCards =
-        document.querySelectorAll(
-            ".event-card"
-        );
-
-
+    document.querySelectorAll("[data-open-modal]").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            const modalId = btn.getAttribute("data-open-modal");
+            openModal(modalId);
+        });
+    });
 
     /* =========================================================
-       AI STATUS HTML
+       NOTIFICATION BELL & DROPDOWN (Requirement 8)
     ========================================================== */
+    const bellBtn = document.getElementById("btn-notification-bell");
+    const notifDropdown = document.getElementById("notification-dropdown");
+    const unreadBadge = document.getElementById("bell-unread-count");
+    const markAllReadBtn = document.getElementById("btn-mark-all-read");
 
-    function getStatusHTML(status) {
+    if (bellBtn && notifDropdown) {
+        bellBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const isActive = notifDropdown.classList.toggle("active");
+            bellBtn.classList.toggle("active", isActive);
+            bellBtn.setAttribute("aria-expanded", isActive ? "true" : "false");
+            notifDropdown.setAttribute("aria-hidden", isActive ? "false" : "true");
+        });
 
+        // Close on click outside
+        document.addEventListener("click", function (e) {
+            if (!notifDropdown.contains(e.target) && !bellBtn.contains(e.target)) {
+                notifDropdown.classList.remove("active");
+                bellBtn.classList.remove("active");
+                bellBtn.setAttribute("aria-expanded", "false");
+                notifDropdown.setAttribute("aria-hidden", "true");
+            }
+        });
 
-        if (status === "ready") {
-
-            return `
-                <span class="status-ready">
-                    ● Ready
-                </span>
-            `;
-
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                document.querySelectorAll(".notif-item.unread").forEach(function (item) {
+                    item.classList.remove("unread");
+                });
+                if (unreadBadge) unreadBadge.style.display = "none";
+                const chip = document.querySelector(".notif-unread-chip");
+                if (chip) chip.textContent = "0 new";
+                markAllReadBtn.style.display = "none";
+            });
         }
-
-
-        if (status === "processing") {
-
-            return `
-                <span class="status-processing">
-                    ● Processing
-                </span>
-            `;
-
-        }
-
-
-        if (status === "failed") {
-
-            return `
-                <span class="status-failed">
-                    ● Failed
-                </span>
-            `;
-
-        }
-
-
-        return `
-            <span class="status-pending">
-                ● Waiting
-            </span>
-        `;
-
     }
 
-
-
     /* =========================================================
-       UPDATE EVENT DATA
+       3-SLIDE INTERACTIVE BANNER CAROUSEL (Requirements 5, 6, 7)
     ========================================================== */
+    const bannerCarousel = document.getElementById("dashboard-banner-carousel");
+    const bannerSlides = Array.from(document.querySelectorAll(".banner-slide"));
+    const bannerDots = Array.from(document.querySelectorAll(".banner-dot"));
+    const btnBannerPrev = document.getElementById("banner-prev-btn");
+    const btnBannerNext = document.getElementById("banner-next-btn");
 
-    function updateEventData(eventCard) {
+    if (bannerCarousel && bannerSlides.length > 0) {
+        let currentSlideIndex = 0;
+        let bannerAutoPlayTimer = null;
 
+        function goToSlide(index) {
+            if (index < 0) {
+                currentSlideIndex = bannerSlides.length - 1;
+            } else if (index >= bannerSlides.length) {
+                currentSlideIndex = 0;
+            } else {
+                currentSlideIndex = index;
+            }
 
-        const statusUrl =
-            eventCard.dataset.statusUrl;
+            bannerSlides.forEach(function (slide, idx) {
+                if (idx === currentSlideIndex) {
+                    slide.classList.add("active");
+                } else {
+                    slide.classList.remove("active");
+                }
+            });
 
-
-        const statusElement =
-            eventCard.querySelector(
-                "[data-ai-status]"
-            );
-
-
-        const photoCountElement =
-            eventCard.querySelector(
-                "[data-photo-count]"
-            );
-
-
-        const photoLabelElement =
-            eventCard.querySelector(
-                "[data-photo-label]"
-            );
-
-
-        if (!statusUrl) {
-
-            return;
-
+            bannerDots.forEach(function (dot, idx) {
+                if (idx === currentSlideIndex) {
+                    dot.classList.add("active");
+                } else {
+                    dot.classList.remove("active");
+                }
+            });
         }
 
+        function startAutoPlay() {
+            stopAutoPlay();
+            bannerAutoPlayTimer = setInterval(function () {
+                goToSlide(currentSlideIndex + 1);
+            }, 5000);
+        }
 
-
-        fetch(
-            statusUrl,
-            {
-                method: "GET",
-
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
+        function stopAutoPlay() {
+            if (bannerAutoPlayTimer) {
+                clearInterval(bannerAutoPlayTimer);
+                bannerAutoPlayTimer = null;
             }
-        )
+        }
 
-        .then(
-            function (response) {
+        if (btnBannerNext) {
+            btnBannerNext.addEventListener("click", function () {
+                goToSlide(currentSlideIndex + 1);
+                startAutoPlay();
+            });
+        }
 
-                if (!response.ok) {
+        if (btnBannerPrev) {
+            btnBannerPrev.addEventListener("click", function () {
+                goToSlide(currentSlideIndex - 1);
+                startAutoPlay();
+            });
+        }
 
-                    throw new Error(
-                        "Failed to fetch event status."
-                    );
-
+        bannerDots.forEach(function (dot) {
+            dot.addEventListener("click", function () {
+                const targetIdx = parseInt(dot.getAttribute("data-slide-index"), 10);
+                if (!isNaN(targetIdx)) {
+                    goToSlide(targetIdx);
+                    startAutoPlay();
                 }
+            });
+        });
 
-                return response.json();
+        // Pause auto-play on hover, resume on mouse leave
+        bannerCarousel.addEventListener("mouseenter", stopAutoPlay);
+        bannerCarousel.addEventListener("mouseleave", startAutoPlay);
 
-            }
-        )
-
-        .then(
-            function (data) {
-
-
-                /* ==============================
-                   UPDATE AI STATUS
-                =============================== */
-
-                if (statusElement) {
-
-                    statusElement.innerHTML =
-                        getStatusHTML(
-                            data.ai_status
-                        );
-
-                }
-
-
-
-                /* ==============================
-                   UPDATE EVENT PHOTO COUNT
-                =============================== */
-
-                if (photoCountElement) {
-
-                    const photoCount =
-                        data.photos
-                            ? data.photos.length
-                            : 0;
-
-
-                    photoCountElement.textContent =
-                        photoCount;
-
-
-                    if (photoLabelElement) {
-
-                        photoLabelElement.textContent =
-                            photoCount === 1
-                                ? "photo"
-                                : "photos";
-
-                    }
-
-                }
-
-            }
-        )
-
-        .catch(
-            function (error) {
-
-                console.error(
-                    "Event data update failed:",
-                    error
-                );
-
-            }
-        );
-
+        // Start auto-play initially
+        startAutoPlay();
     }
-
-
-
-    /* =========================================================
-       INITIAL EVENT STATUS CHECK
-    ========================================================== */
-
-    eventCards.forEach(
-        function (eventCard) {
-
-            updateEventData(
-                eventCard
-            );
-
-        }
-    );
-
-
-
-    /* =========================================================
-       AUTOMATIC EVENT STATUS REFRESH
-    ========================================================== */
-
-    setInterval(
-        function () {
-
-            eventCards.forEach(
-                function (eventCard) {
-
-                    updateEventData(
-                        eventCard
-                    );
-
-                }
-
-            );
-
-        },
-        5000
-    );
-
 
 });

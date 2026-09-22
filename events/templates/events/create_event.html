@@ -1,46 +1,386 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Create Event - Photona</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Event | Photona Studio Suite</title>
+    <link rel="stylesheet" href="{% static 'css/create_event.css' %}?v=4.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-
 <body>
+    <div class="dashboard-layout standalone-layout">
 
-    <h1>Create Event</h1>
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="main-viewport">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left-group">
+                    <a href="{% url 'dashboard' %}" class="btn-topbar-back" title="Return to Dashboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>Dashboard</span></a>
 
-    <p>
-        Create a new event for
-        <strong>{{ request.user.tenant.name }}</strong>
-    </p>
+                    <div class="topbar-title-area">
+                        <div class="breadcrumbs">
+                            <a href="{% url 'dashboard' %}">Studio</a>
+                            <span class="separator">/</span>
+                            <a href="{% url 'dashboard' %}">Events</a>
+                            <span class="separator">/</span>
+                            <span class="current">Create New</span>
+                        </div>
+                        <h1>Create Event</h1>
+                    </div>
+                </div>
 
-    <form method="post">
+                <div class="topbar-actions">
+                    <a href="{% url 'dashboard' %}" class="btn-secondary-action">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Back to Dashboard</span>
+                    </a>
 
-        {% csrf_token %}
+                    <div class="user-badge">
+                        <div class="user-avatar-circle">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div class="user-badge-meta">
+                            <span class="user-badge-name">{{ user.username }}</span>
+                            <span class="user-badge-role">{{ user.get_role_display|default:"Studio Manager" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-        {{ form.as_p }}
+            <div class="content-container">
+                <!-- Welcome / Intro Banner -->
+                <section class="greeting-panel">
+                    <div class="greeting-copy">
+                        <h2>Launch a New Event</h2>
+                        <p>
+                            Configure a private gallery portal for
+                            <strong>{{ tenant.name|default:user.tenant.name }}</strong>. Provide event details on the left, and optionally attach photos under the preview on the right to start AI indexing immediately.
+                        </p>
+                    </div>
+                    <div class="greeting-quick-meta">
+                        <div class="meta-pill">
+                            <span class="meta-dot live"></span>
+                            <span>AI Facial Pipeline Ready</span>
+                        </div>
+                    </div>
+                </section>
 
-        <button type="submit">
-            Create Event
-        </button>
+                <!-- Create Event 2-Column Grid wrapped in Form -->
+                <form method="post" enctype="multipart/form-data" id="create-event-form" class="create-grid" novalidate>
+                    {% csrf_token %}
 
-    </form>
+                    <!-- Form Card (Left Column) -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <div class="form-header-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    <line x1="12" y1="14" x2="12" y2="18"></line>
+                                    <line x1="10" y1="16" x2="14" y2="16"></line>
+                                </svg>
+                            </div>
+                            <div class="form-header-text">
+                                <h3>Event Specifications</h3>
+                                <p>Provide event name and date to initialize your private gallery vault</p>
+                            </div>
+                        </div>
 
-    <br>
+                        {% if form.errors %}
+                            <div class="form-errors-box">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-    <a href="{% url 'dashboard' %}">
-        ← Back to Dashboard
-    </a>
+                        <!-- Event Name Field -->
+                        <div class="form-group">
+                            <div class="form-label-row">
+                                <label for="id_name" class="form-label">
+                                    <span>Event Name</span>
+                                    <span class="required-star">*</span>
+                                </label>
+                                <span class="char-counter" id="name-counter">0 / 200</span>
+                            </div>
 
+                            <div class="input-icon-wrapper">
+                                <div class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                                        <line x1="4" y1="22" x2="4" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    id="id_name" 
+                                    class="form-input" 
+                                    placeholder="e.g. Grand Royal Wedding 2026" 
+                                    maxlength="200" 
+                                    required 
+                                    autofocus
+                                    value="{{ form.name.value|default:'' }}"
+                                >
+                            </div>
+                            <span class="form-hint">A distinctive name helps guests and photographers recognize the album.</span>
+
+                            <!-- Quick Suggestions -->
+                            <div class="chips-container">
+                                <span class="chips-label">Quick Suggestions:</span>
+                                <div class="chips-row">
+                                    <button type="button" class="chip-btn" data-category-chip="💍 Wedding Gala">💍 Wedding Gala</button>
+                                    <button type="button" class="chip-btn" data-category-chip="👔 Corporate Summit">👔 Corporate Summit</button>
+                                    <button type="button" class="chip-btn" data-category-chip="🎉 Birthday Celebration">🎉 Birthday Celebration</button>
+                                    <button type="button" class="chip-btn" data-category-chip="🎓 Graduation Night">🎓 Graduation Night</button>
+                                    <button type="button" class="chip-btn" data-category-chip="✨ Fashion Showcase">✨ Fashion Showcase</button>
+                                </div>
+                            </div>
+
+                            {% if form.name.errors %}
+                                <span class="field-error-msg">{{ form.name.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Event Date Field -->
+                        <div class="form-group">
+                            <div class="form-label-row">
+                                <label for="id_event_date" class="form-label">
+                                    <span>Event Date</span>
+                                </label>
+                            </div>
+
+                            <div class="input-icon-wrapper">
+                                <div class="input-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                </div>
+                                <input 
+                                    type="date" 
+                                    name="event_date" 
+                                    id="id_event_date" 
+                                    class="form-input" 
+                                    value="{{ form.event_date.value|default:'' }}"
+                                >
+                            </div>
+                            <span class="form-hint">Choose when the event takes place, or pick a preset below.</span>
+
+                            <!-- Quick Date Presets -->
+                            <div class="chips-container">
+                                <span class="chips-label">Date Presets:</span>
+                                <div class="chips-row">
+                                    <button type="button" class="chip-btn" data-date-preset="today">📅 Today</button>
+                                    <button type="button" class="chip-btn" data-date-preset="tomorrow">🌅 Tomorrow</button>
+                                    <button type="button" class="chip-btn" data-date-preset="weekend">🥂 This Weekend</button>
+                                    <button type="button" class="chip-btn" data-date-preset="next-month">🗓️ Next Month</button>
+                                </div>
+                            </div>
+
+                            {% if form.event_date.errors %}
+                                <span class="field-error-msg">{{ form.event_date.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Feature Banner Inside Form -->
+                        <div class="form-feature-box">
+                            <div class="feature-box-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                                </svg>
+                            </div>
+                            <div class="feature-box-text">
+                                <span class="feature-box-title">Automated AI Face Indexing & QR Generation</span>
+                                <span class="feature-box-sub">Once created, a dedicated public upload URL, guest selfie search engine, and high-res QR code are initialized immediately.</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons: Clean "Create Event" button -->
+                        <div class="form-actions">
+                            <a href="{% url 'dashboard' %}" class="btn-cancel-event">
+                                Cancel
+                            </a>
+
+                            <button type="submit" id="submit-btn" class="btn-submit-event">
+                                <span id="submit-btn-text">Create Event</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Live Catalog Card Preview & Photos Upload Section -->
+                    <div class="preview-column">
+                        <div class="preview-card-wrapper">
+                            <div class="preview-badge-header">
+                                <h4>Live Catalog Card Preview</h4>
+                                <div class="preview-pill">
+                                    <span class="preview-dot"></span>
+                                    <span>Interactive Preview</span>
+                                </div>
+                            </div>
+
+                            <!-- Mirror of Dashboard Event Card (clean, without manage event button) -->
+                            <div class="event-card-preview">
+                                <div class="event-card-header">
+                                    <div class="preview-title-group">
+                                        <h3 class="preview-event-name" id="preview-name">New Studio Event</h3>
+                                        <span class="preview-event-date" id="preview-date">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            </svg>
+                                            <span>Date not specified</span>
+                                        </span>
+                                    </div>
+                                    <span class="badge badge-active">Active</span>
+                                </div>
+
+                                <div class="preview-meta-block">
+                                    <div class="meta-row">
+                                        <span class="meta-label">Photos:</span>
+                                        <span class="meta-val-badge">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                <polyline points="21 15 16 10 5 21"></polyline>
+                                            </svg>
+                                            <strong id="preview-photo-count">0</strong>
+                                            <span id="preview-photo-label">photos</span>
+                                        </span>
+                                    </div>
+
+                                    <div class="meta-row">
+                                        <span class="meta-label">AI Status:</span>
+                                        <span class="status-pill status-pending" id="preview-ai-status">
+                                            <span class="status-dot"></span>
+                                            <span id="preview-ai-text">Waiting for Photos</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Photo Upload Section in Right Column -->
+                            <div class="preview-upload-section">
+                                <div class="upload-section-header">
+                                    <h5>Add Photos (Optional)</h5>
+                                    <span class="tag-recommended">Upload Now</span>
+                                </div>
+
+                                <!-- Hidden real input -->
+                                <input 
+                                    type="file" 
+                                    name="photos" 
+                                    id="id_photos" 
+                                    class="visually-hidden" 
+                                    multiple 
+                                    accept="image/jpeg,image/png,image/webp"
+                                >
+
+                                <!-- Dropzone -->
+                                <div class="upload-dropzone compact" id="upload-dropzone">
+                                    <div class="dropzone-icon-circle small">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="dropzone-content">
+                                        <h4>Drop event photos here, or click to browse</h4>
+                                        <p>Supports JPG, JPEG, PNG, WebP • Max 20 MB each</p>
+                                    </div>
+                                </div>
+
+                                <!-- Dedicated Upload Photos Button under Add Photos section -->
+                                <div class="upload-action-wrapper">
+                                    <button type="button" class="btn-upload-photos-main" id="btn-upload-photos">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        <span>Upload Photos</span>
+                                    </button>
+                                </div>
+
+                                <!-- Selected Files Preview Grid -->
+                                <div class="selected-files-preview" id="selected-files-preview">
+                                    <div class="files-preview-header">
+                                        <div class="files-count-badge">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                <polyline points="21 15 16 10 5 21"></polyline>
+                                            </svg>
+                                            <span id="files-count-text">0 photos selected</span>
+                                        </div>
+                                        <button type="button" class="btn-clear-files" id="btn-clear-files">
+                                            Clear all
+                                        </button>
+                                    </div>
+
+                                    <div class="files-thumbnail-grid" id="files-thumbnail-grid"></div>
+                                </div>
+
+                                {% if form.photos.errors %}
+                                    <span class="field-error-msg">{{ form.photos.errors.0 }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Highlights Card -->
+                        <div class="highlights-card">
+                            <h4 class="highlights-title">Photona Studio Workflow</h4>
+
+                            <div class="highlight-item">
+                                <div class="highlight-icon-circle">⚡</div>
+                                <div class="highlight-text">
+                                    <h5>Lightning-Fast Ingestion</h5>
+                                    <p>Upload high-res photos during creation. Celery workers handle background batching automatically.</p>
+                                </div>
+                            </div>
+
+                            <div class="highlight-item">
+                                <div class="highlight-icon-circle">🔍</div>
+                                <div class="highlight-text">
+                                    <h5>Guest Selfie Discovery</h5>
+                                    <p>Attendees snap a selfie on their phone and instantly retrieve all photos they appear in.</p>
+                                </div>
+                            </div>
+
+                            <div class="highlight-item">
+                                <div class="highlight-icon-circle">🔒</div>
+                                <div class="highlight-text">
+                                    <h5>Isolated Tenant Security</h5>
+                                    <p>Your studio's vectors and photos remain strictly isolated in your tenant database.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Event Dynamic Controller -->
+    <script src="{% static 'js/create_event.js' %}?v=4.0"></script>
 </body>
-
 </html>

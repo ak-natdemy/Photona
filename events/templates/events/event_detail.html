@@ -1,315 +1,814 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>{{ event.name }} - Photona</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ event.name }} | Photona Studio Suite</title>
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v=4.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-
 <body>
+    <div class="dashboard-layout standalone-layout">
 
-    <h1>{{ event.name }}</h1>
+        <!-- ================= MAIN VIEWPORT ================= -->
+        <main class="main-viewport" id="event-viewport" data-event-id="{{ event.id }}" data-status-url="{% url 'events:ai_status' event.id %}">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left-group">
+                    <a href="{% url 'dashboard' %}" class="btn-topbar-back" title="Return to Dashboard">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Dashboard</span>
+                    </a>
 
-    <p>
-        Tenant:
-        <strong>{{ event.tenant.name }}</strong>
-    </p>
+                    <div class="topbar-title-area">
+                        <div class="breadcrumbs">
+                            <a href="{% url 'dashboard' %}">Studio</a>
+                            <span class="separator">/</span>
+                            <span class="current">{{ event.name }}</span>
+                        </div>
+                        <h1>Event Overview</h1>
+                    </div>
+                </div>
 
-    <p>
-        Event date:
-        <strong>{{ event.event_date }}</strong>
-    </p>
+                <div class="topbar-actions">
+                    <a href="{{ public_event_url }}" target="_blank" rel="noopener" class="btn-create-secondary" title="Open Guest Selfie Portal">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        <span>Guest Portal</span>
+                    </a>
+                </div>
+            </header>
 
-    <p>
-        AI Status:
-        <span id="ai-status">
-            {{ event.ai_status|title }}
-        </span>
-    </p>
+            <div class="content-container">
+                <!-- ================= 1. EVENT DETAILS TOP SECTION (With AI Vector Mesh & Inline Edit) ================= -->
+                <section class="event-hero-card">
+                    <!-- Futuristic Biometric / Neural AI Vector Mesh Background (Point 6) -->
+                    <div class="hero-ai-bg-wrap" aria-hidden="true">
+                        <svg class="hero-ai-mesh-svg" viewBox="0 0 460 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="aiMeshGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#FFA200" stop-opacity="0.35"/>
+                                    <stop offset="60%" stop-color="#FFBF00" stop-opacity="0.15"/>
+                                    <stop offset="100%" stop-color="#141226" stop-opacity="0.05"/>
+                                </linearGradient>
+                                <radialGradient id="aiGlowAmber" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#FFA200" stop-opacity="0.5"/>
+                                    <stop offset="100%" stop-color="#FFA200" stop-opacity="0"/>
+                                </radialGradient>
+                                <radialGradient id="aiGlowViolet" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
+                                    <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                                </radialGradient>
+                            </defs>
 
-    <hr>
+                            <!-- Ambient Glow Orbs -->
+                            <circle cx="340" cy="110" r="110" fill="url(#aiGlowAmber)"/>
+                            <circle cx="210" cy="180" r="80" fill="url(#aiGlowViolet)"/>
 
-    <!-- Event Actions -->
+                            <!-- Facial Biometric Geometry & Neural Mesh Lines -->
+                            <line x1="240" y1="40" x2="310" y2="40" stroke="#FFA200" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
+                            <line x1="310" y1="40" x2="380" y2="60" stroke="#FFA200" stroke-width="1.2" opacity="0.5"/>
+                            <line x1="240" y1="40" x2="200" y2="70" stroke="#FFA200" stroke-width="1" opacity="0.4"/>
 
-    <h2>Event Actions</h2>
+                            <!-- Eye / Brow Contours -->
+                            <path d="M 230 75 Q 260 65 290 75" stroke="#FFA200" stroke-width="1.8" fill="none" opacity="0.75"/>
+                            <path d="M 330 75 Q 360 65 390 75" stroke="#FFA200" stroke-width="1.8" fill="none" opacity="0.75"/>
 
-    <p>
-        <a href="{% url 'events:upload_photos' event.id %}">
-            + Upload Photos
-        </a>
-    </p>
+                            <!-- Biometric Scanning Reticles (Eyes) -->
+                            <circle cx="260" cy="85" r="14" stroke="#FFA200" stroke-width="1.2" stroke-dasharray="2 2" fill="none" opacity="0.8"/>
+                            <circle cx="260" cy="85" r="4" fill="#FFA200"/>
+                            <circle cx="360" cy="85" r="14" stroke="#FFA200" stroke-width="1.2" stroke-dasharray="2 2" fill="none" opacity="0.8"/>
+                            <circle cx="360" cy="85" r="4" fill="#FFA200"/>
 
-    <hr>
+                            <!-- Nose Bridge & Triangulation -->
+                            <line x1="310" y1="75" x2="310" y2="135" stroke="#FFBF00" stroke-width="1.6" opacity="0.75"/>
+                            <line x1="260" y1="85" x2="310" y2="135" stroke="rgba(255, 191, 0, 0.45)" stroke-width="1"/>
+                            <line x1="360" y1="85" x2="310" y2="135" stroke="rgba(255, 191, 0, 0.45)" stroke-width="1"/>
+                            <circle cx="310" cy="135" r="5" fill="#FFBF00"/>
 
-    <!-- Guest Access -->
+                            <!-- Cheekbone Nodes & Mesh Triangles -->
+                            <line x1="200" y1="120" x2="260" y2="85" stroke="rgba(255, 191, 0, 0.4)" stroke-width="1"/>
+                            <line x1="200" y1="120" x2="270" y2="155" stroke="rgba(255, 191, 0, 0.4)" stroke-width="1"/>
+                            <line x1="420" y1="120" x2="360" y2="85" stroke="rgba(255, 191, 0, 0.4)" stroke-width="1"/>
+                            <line x1="420" y1="120" x2="350" y2="155" stroke="rgba(255, 191, 0, 0.4)" stroke-width="1"/>
+                            <circle cx="200" cy="120" r="3.5" fill="#FFA200" opacity="0.85"/>
+                            <circle cx="420" cy="120" r="3.5" fill="#FFA200" opacity="0.85"/>
 
-    <h2>Guest Access</h2>
+                            <!-- Lips & Chin Mesh -->
+                            <path d="M 275 165 Q 310 180 345 165" stroke="#FFA200" stroke-width="1.6" fill="none" opacity="0.7"/>
+                            <line x1="275" y1="165" x2="310" y2="210" stroke="rgba(255, 191, 0, 0.45)" stroke-width="1"/>
+                            <line x1="345" y1="165" x2="310" y2="210" stroke="rgba(255, 191, 0, 0.45)" stroke-width="1"/>
+                            <circle cx="310" cy="210" r="5" fill="#FFA200"/>
 
-    <p>
-        Share this link with your guests so they can
-        find their photos.
-    </p>
+                            <!-- Jawline Arc -->
+                            <path d="M 190 125 Q 230 220 310 235 Q 390 220 430 125" stroke="#FFA200" stroke-width="1.5" stroke-dasharray="5 3" fill="none" opacity="0.5"/>
 
-    <p>
-        <strong>Public Event Link:</strong>
-    </p>
+                            <!-- Futuristic Scan Framing Brackets -->
+                            <path d="M 160 55 H 180 M 160 55 V 75" stroke="#FFA200" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M 440 55 H 420 M 440 55 V 75" stroke="#FFA200" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M 160 230 H 180 M 160 230 V 210" stroke="#FFA200" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M 440 230 H 420 M 440 230 V 210" stroke="#FFA200" stroke-width="2" stroke-linecap="round"/>
 
-    <input
-        type="text"
-        id="public-event-link"
-        value="{{ public_event_url }}"
-        readonly
-        size="70"
-    >
+                            <!-- Data telemetry labels in vector -->
+                            <text x="175" y="48" fill="#FFA200" font-family="monospace" font-size="9" font-weight="700" letter-spacing="1.5" opacity="0.75">AI BIOMETRIC MESH</text>
+                            <text x="360" y="245" fill="#FFA200" font-family="monospace" font-size="8.5" font-weight="600" opacity="0.65">MODEL: INSIGHTFACE 512-D</text>
+                        </svg>
+                    </div>
 
-    <p>
+                    <div class="hero-card-content-grid">
+                        <div class="hero-left-column">
+                            <!-- Requirement 3: Tenant name, active status, AI status (small, structured micro-badges) -->
+                            <div class="hero-meta-compact-row">
+                                <span class="micro-badge badge-tenant">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                    </svg>
+                                    <span>{{ event.tenant.name }}</span>
+                                </span>
 
-        <button
-            type="button"
-            onclick="copyPublicEventLink()"
-        >
-            Copy Link
-        </button>
+                                {% if event.is_active %}
+                                    <span class="micro-badge badge-active-pill">
+                                        <span class="micro-pulse-dot"></span>
+                                        <span>Active Event</span>
+                                    </span>
+                                {% else %}
+                                    <span class="micro-badge badge-inactive-pill">
+                                        <span>Inactive</span>
+                                    </span>
+                                {% endif %}
 
-        &nbsp;
+                                <span class="micro-badge badge-ai-pill status-{{ event.ai_status }}" id="ai-status" title="AI Status: {{ event.ai_status|title }}">
+                                    <span class="ai-status-circle status-{{ event.ai_status }}">
+                                        {% if event.ai_status == "ready" or event.ai_status == "completed" %}
+                                            <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                        {% elif event.ai_status == "processing" %}
+                                            <svg class="status-svg circle-buffer-svg" viewBox="0 0 24 24" fill="none">
+                                                <circle class="buffer-fill" cx="12" cy="12" r="8.5" stroke="#FFA200" stroke-width="2.5" stroke-linecap="round" />
+                                            </svg>
+                                        {% elif event.ai_status == "failed" %}
+                                            <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                <line x1="8.5" y1="8.5" x2="15.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
+                                                <line x1="15.5" y1="8.5" x2="8.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
+                                            </svg>
+                                        {% else %}
+                                            <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                <circle cx="12" cy="12" r="3" fill="#64748b" />
+                                            </svg>
+                                        {% endif %}
+                                    </span>
+                                    <span id="ai-status-text">{% if event.ai_status == "ready" %}AI Ready{% else %}{{ event.ai_status|title }}{% endif %}</span>
+                                </span>
+                            </div>
 
-        <a
-            href="{{ public_event_url }}"
-            target="_blank"
-        >
-            Open Public Event
-        </a>
+                            <h2 class="event-title" id="display-event-name">{{ event.name }}</h2>
 
-    </p>
+                            <!-- Event Description -->
+                            <div class="hero-description-block">
+                                {% if event.description %}
+                                    <p class="hero-description-text" id="display-event-desc">{{ event.description }}</p>
+                                {% else %}
+                                    <p class="hero-description-text text-muted-desc" id="display-event-desc">No description specified for this event.</p>
+                                {% endif %}
+                            </div>
 
-    <br>
+                            <!-- Requirements 4 & 5: Aligned equal-size chips for Photos, Date, Edit Event, and Share the event -->
+                            <div class="hero-stats-row">
+                                <!-- Chip 1: Total Photos -->
+                                <div class="hero-stat-chip">
+                                    <div class="chip-icon amber">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                            <polyline points="21 15 16 10 5 21"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="chip-text">
+                                        <span class="chip-label">Total Photos</span>
+                                        <strong class="chip-val" id="total-photos-count">{{ photos|length }}</strong>
+                                    </div>
+                                </div>
 
-    <h3>Scan to Find Photos</h3>
+                                <!-- Chip 2: Event Date -->
+                                <div class="hero-stat-chip">
+                                    <div class="chip-icon blue">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="chip-text">
+                                        <span class="chip-label">Event Date</span>
+                                        <strong class="chip-val chip-date" id="display-event-date">{{ event.event_date|date:"F d, Y"|default:"Not scheduled" }}</strong>
+                                    </div>
+                                </div>
 
-    <p>
-        Guests can scan this QR code to open the event.
-    </p>
+                                <!-- Chip 3: Edit Event (Requirement 4: Same size as Total Photos & Event Date!) -->
+                                <button type="button" class="hero-stat-chip chip-action-btn chip-btn-edit" id="btn-edit-event-hero" data-open-modal="edit-event-modal" title="Edit Event Details">
+                                    <div class="chip-icon emerald">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="chip-text">
+                                        <span class="chip-label">Event Details</span>
+                                        <strong class="chip-val">Edit Event</strong>
+                                    </div>
+                                </button>
 
-    <img
-        src="data:image/png;base64,{{ qr_code }}"
-        alt="QR code for {{ event.name }}"
-        width="250"
-    >
+                                <!-- Chip 4: Share the Event (Requirement 5: Attractive glowing button) -->
+                                <button type="button" class="hero-stat-chip chip-action-btn chip-btn-share" id="btn-share-event-hero" data-open-modal="share-event-modal" title="Share Guest Selfie Portal">
+                                    <div class="chip-icon gold-glow">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="18" cy="5" r="3"></circle>
+                                            <circle cx="6" cy="12" r="3"></circle>
+                                            <circle cx="18" cy="19" r="3"></circle>
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="chip-text">
+                                        <span class="chip-label">Guest Portal</span>
+                                        <strong class="chip-val text-gold-glow">Share the Event</strong>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
 
-    <hr>
+                        <div class="hero-top-action-wrap">
+                            <!-- Clean spacer for vector graphic alignment -->
+                        </div>
+                    </div>
+                </section>
 
-    <!-- Event Photos -->
+                <!-- ================= 2. SPLIT INGESTION SECTION (Requirement 1: Upload & Drive side-by-side) ================= -->
+                <section class="ingestion-split-container" id="upload-ingest-section">
+                    <div class="ingest-split-grid">
+                        <!-- LEFT SPLIT CARD: DIRECT PHOTO UPLOAD -->
+                        <div class="ingest-split-card" id="card-local-upload">
+                            <div class="split-card-header">
+                                <div class="split-card-icon-title">
+                                    <div class="split-header-icon amber">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="split-header-h3">Upload Photos</h3>
+                                        <p class="split-header-desc">Drag & drop high-res event files or browse</p>
+                                    </div>
+                                </div>
+                            </div>
 
-    <h2>Photos</h2>
+                            <form action="{% url 'events:upload_photos' event.id %}" method="POST" enctype="multipart/form-data" class="upload-dropzone-form" id="local-upload-form">
+                                {% csrf_token %}
+                                <div class="dropzone-box" id="dropzone-box">
+                                    <input type="file" name="images" id="photos-file-input" multiple accept="image/jpeg,image/png,image/webp" class="dropzone-file-input" title="">
+                                    
+                                    <div class="dropzone-content" id="dropzone-idle-content">
+                                        <div class="dropzone-icon-circle">
+                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="17 8 12 3 7 8"></polyline>
+                                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                                            </svg>
+                                        </div>
+                                        <h4 class="dropzone-title">Drag & Drop event photos, or <span class="dropzone-link">browse</span></h4>
+                                        <p class="dropzone-hint">Supports high-res JPG, PNG, and WebP up to 20MB.</p>
+                                    </div>
 
-    <p>
-        Total photos:
-        <strong>{{ photos|length }}</strong>
-    </p>
+                                    <!-- Instant Miniature Preview Thumbnails Strip -->
+                                    <div class="dropzone-preview-container" id="dropzone-preview-container" style="display: none;">
+                                        <div class="preview-header-bar">
+                                            <span class="preview-count-chip" id="preview-count-chip">0 photos selected</span>
+                                            <button type="button" class="btn-clear-selection" id="btn-clear-selected-files">Change Selection</button>
+                                        </div>
+                                        <div class="dropzone-thumbnails-strip" id="dropzone-thumbnails-strip">
+                                            <!-- Miniature thumbnails injected instantly via client-side JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
 
-    {% if photos %}
+                                <div class="dropzone-footer">
+                                    <span class="upload-tip">Processed in background using facial indexing.</span>
+                                    <button type="submit" class="btn-primary-action btn-upload-start" id="btn-start-upload" disabled>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                        <span id="upload-btn-label">Upload</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
 
-        {% for photo in photos %}
+                        <!-- RIGHT SPLIT CARD: GOOGLE DRIVE IMPORT -->
+                        <div class="ingest-split-card" id="card-drive-import">
+                            <div class="split-card-header">
+                                <div class="split-card-icon-title">
+                                    <div class="split-header-icon cyan">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="split-header-h3">Import from Google Drive</h3>
+                                        <p class="split-header-desc">Auto-download & index folder in background</p>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div>
+                            <div class="drive-split-body">
+                                <p class="drive-intro-copy">Paste any public Google Drive folder link. Photona will automatically download all images and start 512-D face indexing.</p>
 
-                <img
-                    src="{{ photo.image.url }}"
-                    alt="{{ event.name }}"
-                    width="300"
-                >
+                                <form action="{% url 'events:import_drive' event.id %}" method="POST" id="drive-import-form" class="drive-import-form">
+                                    {% csrf_token %}
+                                    <div class="drive-input-col">
+                                        <div class="drive-input-wrap">
+                                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drive-input-icon">
+                                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                            </svg>
+                                            <input type="url" name="drive_url" id="drive_url" class="drive-url-input" placeholder="Paste Google Drive link here..." required>
+                                        </div>
 
-                <p>
-                    Processing status:
+                                        <div class="drive-guidance-callout">
+                                            <div class="callout-bullet">i</div>
+                                            <span>Set folder sharing to <strong>"Anyone with the link can view"</strong>.</span>
+                                        </div>
 
-                    <strong id="photo-status-{{ photo.id }}">
-                        {{ photo.get_processing_status_display }}
-                    </strong>
+                                        <div class="drive-feedback-alert" id="drive-feedback-alert" style="display: none;"></div>
 
-                </p>
+                                        <button type="submit" class="btn-primary-action btn-drive-import" id="btn-submit-drive">
+                                            <span class="btn-text">Import & Index from Drive</span>
+                                            <span class="btn-spinner" style="display: none;">
+                                                <svg class="spinner-svg" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" stroke-dasharray="40" stroke-dashoffset="15"></circle>
+                                                </svg>
+                                                <span>Importing...</span>
+                                            </span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
+                <!-- ================= 3. PHOTO CATALOG & DYNAMIC TOOLBAR ================= -->
+                <section class="photos-section" id="photos-section">
+                    <div class="section-header">
+                        <div class="section-heading-left">
+                            <div class="section-title-row">
+                                <h2>All Event Photos</h2>
+                                <span class="gallery-badge"><span id="gallery-count">{{ photos|length }}</span> Photos</span>
+                            </div>
+                            <!-- Point 11: Subtitle removed as requested -->
+                        </div>
+                    </div>
+
+                    {% if photos %}
+                        <!-- Bulk Actions Toolbar (Points 3, 4, 5, 8, 12) -->
+                        <div class="bulk-actions-toolbar">
+                            <div class="bulk-left-group">
+                                <!-- Point 12: Display count badge only when at least 1 image is selected -->
+                                <span class="selected-counter-tag" id="selected-counter-tag" style="display: none;">
+                                    <strong id="selected-count-num">0</strong> selected
+                                </span>
+                            </div>
+
+                            <div class="bulk-right-group">
+                                <!-- Point 3: Select All button is in right corner near Download button -->
+                                <button type="button" class="btn-bulk-toggle" id="btn-select-all">
+                                    <input type="checkbox" id="master-select-checkbox" class="bulk-master-checkbox" aria-label="Select all photos">
+                                    <span id="select-all-label">Select All</span>
+                                </button>
+
+                                <!-- Point 5: Dynamic Download button ("Download All (ZIP)" < 2, "Download Selected (ZIP)" >= 2) -->
+                                <a href="{% url 'events:download_zip' event.id %}" class="btn-bulk-action btn-bulk-primary" id="btn-dynamic-download-zip" title="Download ZIP">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    <span id="download-btn-text">Download All (ZIP)</span>
+                                </a>
+
+                                <!-- Point 4 & 8: Delete button hidden when 0, "Delete" when 1, "Delete All" when >= 2 -->
+                                <button type="button" class="btn-bulk-action btn-bulk-danger" id="btn-dynamic-delete" style="display: none;" title="Delete selected photos">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                    <span id="delete-btn-text">Delete</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Little Photo Cards Grid (Point 2: Descending order by last added) -->
+                        <div class="photo-cards-grid" id="photo-cards-grid">
+                            {% for photo in photos %}
+                                <div class="little-photo-card" id="photo-card-{{ photo.id }}" data-id="{{ photo.id }}" data-status="{{ photo.processing_status }}">
+                                    <!-- Point 6: Rounded shape semi-transparent check tick box at top right corner -->
+                                    <div class="card-select-overlay-right">
+                                        <input type="checkbox" class="photo-checkbox sr-checkbox" value="{{ photo.id }}" id="chk-{{ photo.id }}" aria-label="Select photo #{{ forloop.revcounter }}">
+                                        <label for="chk-{{ photo.id }}" class="custom-glass-chk" title="Select photo">
+                                            <svg class="chk-check-svg" viewBox="0 0 24 24" fill="none" stroke="#191730" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </label>
+                                    </div>
+
+                                    <!-- Lightweight Thumbnail Image with Click Preview (Point 4) -->
+                                    <div class="photo-thumb-container" data-full-img="{{ photo.image.url }}" data-photo-id="{{ photo.id }}" data-photo-number="{{ forloop.revcounter }}">
+                                        <img src="{{ photo.thumbnail_url }}" alt="{{ event.name }} photo #{{ forloop.revcounter }}" loading="lazy" class="card-photo-img">
+                                        
+                                        <!-- Hover Action Icons Overlay -->
+                                        <div class="card-hover-actions">
+                                            <!-- Download single photo icon -->
+                                            <a href="{{ photo.image.url }}" download class="hover-action-btn hover-btn-download" title="Download photo">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                </svg>
+                                            </a>
+
+                                            <!-- Delete single photo icon -->
+                                            <button type="button" class="hover-action-btn hover-btn-delete" data-delete-photo-id="{{ photo.id }}" data-photo-num="{{ forloop.revcounter }}" title="Delete photo">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Photo Card Footer: Number, Added Date/Time, and Status Symbol -->
+                                    <div class="photo-card-info">
+                                        <div class="photo-info-left">
+                                            <!-- Chronological Photo Number -->
+                                            <span class="photo-chrono-number">#{{ forloop.revcounter }}</span>
+                                            <!-- Upload Date and Time -->
+                                            <span class="photo-upload-time" title="{{ photo.uploaded_at|date:'M d, Y · h:i A' }}">
+                                                {{ photo.uploaded_at|date:"M d, Y · h:i A" }}
+                                            </span>
+                                        </div>
+
+                                        <!-- AI Status Symbol -->
+                                        <div class="photo-info-right">
+                                            <span class="ai-status-circle status-{{ photo.processing_status }}"
+                                                  id="photo-status-{{ photo.id }}"
+                                                  title="AI Status: {{ photo.get_processing_status_display }}"
+                                                  data-status="{{ photo.processing_status }}">
+                                                {% if photo.processing_status == "completed" or photo.processing_status == "ready" %}
+                                                    <!-- Green Tick -->
+                                                    <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                        <circle cx="12" cy="12" r="8.5" stroke="#10b981" stroke-width="2" fill="rgba(16, 185, 129, 0.12)" />
+                                                        <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                                                    </svg>
+                                                {% elif photo.processing_status == "processing" %}
+                                                    <!-- Buffer / Spinner -->
+                                                    <svg class="status-svg circle-buffer-svg" viewBox="0 0 24 24" fill="none">
+                                                        <circle class="buffer-track" cx="12" cy="12" r="8.5" stroke="rgba(255, 162, 0, 0.25)" stroke-width="2.5" />
+                                                        <circle class="buffer-fill" cx="12" cy="12" r="8.5" stroke="#FFA200" stroke-width="2.5" stroke-linecap="round" />
+                                                    </svg>
+                                                {% elif photo.processing_status == "failed" %}
+                                                    <!-- Red Failed -->
+                                                    <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                        <circle cx="12" cy="12" r="8.5" stroke="#ef4444" stroke-width="2" fill="rgba(239, 68, 68, 0.12)" />
+                                                        <line x1="8.5" y1="8.5" x2="15.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
+                                                        <line x1="15.5" y1="8.5" x2="8.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
+                                                    </svg>
+                                                {% else %}
+                                                    <!-- Pending -->
+                                                    <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                        <circle cx="12" cy="12" r="8.5" stroke="#94a3b8" stroke-width="2" fill="rgba(148, 163, 184, 0.12)" />
+                                                        <circle cx="12" cy="12" r="2.5" fill="#64748b" />
+                                                    </svg>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- Empty Photos State -->
+                        <div class="empty-state-panel">
+                            <div class="empty-icon-circle">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                            </div>
+                            <h3>No Photos In This Album Yet</h3>
+                            <p>Choose an ingestion method above to upload shoot files or import directly from Google Drive.</p>
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= EDIT EVENT MODAL ================= -->
+    <div class="modal-dialog-backdrop" id="edit-event-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog-panel">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <div class="modal-badge-pill">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span>EVENT SETTINGS</span>
+                    </div>
+                    <h2>Edit Event Details</h2>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-modal="edit-event-modal" aria-label="Close modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
 
-            <hr>
-
-        {% endfor %}
-
-    {% else %}
-
-        <p>
-            No photos uploaded yet.
-        </p>
-
-    {% endif %}
-
-    <br>
-
-    <a href="{% url 'dashboard' %}">
-        ← Back to Dashboard
-    </a>
-
-
-    <script>
-
-        /*
-         * Copy Public Event Link
-         */
-
-        function copyPublicEventLink() {
-
-            const linkInput =
-                document.getElementById(
-                    "public-event-link"
-                );
-
-            navigator.clipboard.writeText(
-                linkInput.value
-            )
-            .then(() => {
-
-                alert(
-                    "Public event link copied!"
-                );
-
-            })
-            .catch(error => {
-
-                console.error(
-                    "Failed to copy public event link:",
-                    error
-                );
-
-            });
-
-        }
-
-
-        /*
-         * AI Status Polling
-         */
-
-        const eventId = "{{ event.id }}";
-
-        const statusElement =
-            document.getElementById("ai-status");
-
-
-        function formatStatus(status) {
-
-            return status
-                .charAt(0)
-                .toUpperCase() + status.slice(1);
-
-        }
-
-
-        function checkAIStatus() {
-
-            fetch(`/events/${eventId}/status/`)
-
-                .then(response => {
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            "Failed to fetch AI status"
-                        );
-
-                    }
-
-                    return response.json();
-
-                })
-
-                .then(data => {
-
-                    /*
-                     * Update Event AI Status
-                     */
-
-                    const status = data.ai_status;
-
-                    statusElement.textContent =
-                        formatStatus(status);
-
-
-                    /*
-                     * Update individual photo statuses
-                     */
-
-                    data.photos.forEach(photo => {
-
-                        const photoStatusElement =
-                            document.getElementById(
-                                `photo-status-${photo.id}`
-                            );
-
-                        if (photoStatusElement) {
-
-                            photoStatusElement.textContent =
-                                formatStatus(
-                                    photo.processing_status
-                                );
-
-                        }
-
-                    });
-
-
-                    /*
-                     * Stop polling when processing
-                     * has completely finished.
-                     */
-
-                    if (
-                        status === "ready" ||
-                        status === "failed"
-                    ) {
-
-                        clearInterval(statusInterval);
-
-                    }
-
-                })
-
-                .catch(error => {
-
-                    console.error(
-                        "Error checking AI status:",
-                        error
-                    );
-
-                });
-
-        }
-
-
-        /*
-         * Check every 2 seconds.
-         */
-
-        const statusInterval = setInterval(
-            checkAIStatus,
-            2000
-        );
-
-
-        /*
-         * Check immediately when page loads.
-         */
-
-        checkAIStatus();
-
-    </script>
-
+            <form action="{% url 'events:edit' event.id %}" method="POST" enctype="multipart/form-data" class="modal-form-body" id="edit-event-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'events:detail' event.id %}">
+
+                <div class="form-group">
+                    <label for="detail_edit_name" class="form-label">
+                        <span>Event Name</span>
+                        <span class="required-star">*</span>
+                    </label>
+                    <input type="text" name="name" id="detail_edit_name" value="{{ event.name }}" class="form-input" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="detail_edit_desc" class="form-label">
+                        <span>Description</span>
+                        <span class="optional-tag">(Optional)</span>
+                    </label>
+                    <textarea name="description" id="detail_edit_desc" class="form-input form-textarea" rows="3">{{ event.description|default:'' }}</textarea>
+                </div>
+
+                <div class="form-row-2col">
+                    <div class="form-group">
+                        <label for="detail_edit_date" class="form-label">
+                            <span>Event Date</span>
+                            <span class="optional-tag">(Optional)</span>
+                        </label>
+                        <input type="date" name="event_date" id="detail_edit_date" value="{{ event.event_date|date:'Y-m-d'|default:'' }}" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="detail_edit_thumb" class="form-label">
+                            <span>Cover Thumbnail</span>
+                            <span class="optional-tag">(Optional)</span>
+                        </label>
+                        <input type="file" name="thumbnail" id="detail_edit_thumb" class="form-input form-file-input" accept="image/jpeg,image/png,image/webp">
+                    </div>
+                </div>
+
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-modal-cancel" data-close-modal="edit-event-modal">Cancel</button>
+                    <button type="submit" class="btn-primary-action btn-modal-submit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Save Changes</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= SINGLE PHOTO DELETE CONFIRMATION MODAL ================= -->
+    <div class="modal-dialog-backdrop" id="delete-photo-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog-panel modal-panel-sm">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <div class="modal-badge-pill modal-badge-danger">DELETE PHOTO</div>
+                    <h2>Delete Photo?</h2>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-modal="delete-photo-modal" aria-label="Close modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body-copy">
+                <p>Are you sure you want to permanently delete photo <strong id="delete-photo-label">#</strong>?</p>
+                <p class="text-danger-sub">This will remove the image file and its facial embedding index.</p>
+            </div>
+
+            <form action="" method="POST" id="delete-photo-form">
+                {% csrf_token %}
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-modal-cancel" data-close-modal="delete-photo-modal">Cancel</button>
+                    <button type="submit" class="btn-danger-action">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>Yes, Delete</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= BULK DELETE PHOTOS MODAL ================= -->
+    <div class="modal-dialog-backdrop" id="bulk-delete-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog-panel modal-panel-sm">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <div class="modal-badge-pill modal-badge-danger">BULK DELETE</div>
+                    <h2>Delete Selected Photos?</h2>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-modal="bulk-delete-modal" aria-label="Close modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body-copy">
+                <p>Are you sure you want to permanently delete <strong id="bulk-delete-count-text">0 selected photos</strong>?</p>
+                <p class="text-danger-sub">This action cannot be undone.</p>
+            </div>
+
+            <form action="{% url 'events:bulk_delete_photos' event.id %}" method="POST" id="bulk-delete-form">
+                {% csrf_token %}
+                <input type="hidden" name="ids" id="bulk-delete-ids-input" value="">
+                <input type="hidden" name="next" value="{% url 'events:detail' event.id %}">
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-modal-cancel" data-close-modal="bulk-delete-modal">Cancel</button>
+                    <button type="submit" class="btn-danger-action">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>Yes, Delete Selected</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= ADVANCED LIGHTBOX MODAL ================= -->
+    <div id="image-lightbox" class="lightbox-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+        <div class="lightbox-wrapper">
+            <div class="lightbox-toolbar">
+                <div class="lightbox-info">
+                    <span class="lightbox-tag" id="lightbox-title">Photo Preview</span>
+                    <span class="lightbox-counter" id="lightbox-counter">Photo 1 of {{ photos|length }}</span>
+                </div>
+                <div class="lightbox-actions">
+                    <a id="lightbox-download" href="#" download class="lightbox-btn" title="Download photo">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </a>
+                    <button type="button" class="lightbox-btn lightbox-close" id="lightbox-close" aria-label="Close preview">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="lightbox-stage">
+                <button type="button" class="lightbox-nav-btn prev-btn" id="lightbox-prev" aria-label="Previous photo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div class="lightbox-image-box">
+                    <img id="lightbox-image" src="" alt="Enlarged photo preview">
+                </div>
+                <button type="button" class="lightbox-nav-btn next-btn" id="lightbox-next" aria-label="Next photo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Polling & Interactive Controls -->
+    <script src="{% static 'js/event_detail.js' %}?v=4.0"></script>
+
+    <!-- ================= SHARE EVENT MODAL (Requirement 5) ================= -->
+    <div class="modal-dialog-backdrop" id="share-event-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog-panel modal-panel-md">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <span class="modal-badge-pill">
+                        <span>✦</span>
+                        <span>GUEST SELFIE PORTAL</span>
+                    </span>
+                    <h2>Share "{{ event.name }}"</h2>
+                    <p>Deliver this link to guests so they can upload a selfie and instantly find their photos.</p>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-modal="share-event-modal" aria-label="Close modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-form-body share-modal-body">
+                <!-- Direct Link Input with Copy Button -->
+                <div class="share-link-box">
+                    <label class="form-label">Direct Guest Portal URL</label>
+                    <div class="share-input-group">
+                        <input type="text" id="share-portal-url-input" class="form-input share-url-input" value="{{ public_event_url }}" readonly>
+                        <button type="button" class="btn-copy-link" id="btn-copy-share-url" title="Copy link to clipboard">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span id="copy-btn-text">Copy Link</span>
+                        </button>
+                    </div>
+                    <span class="copy-success-tooltip" id="copy-success-feedback" style="display: none;">✓ Link copied to clipboard!</span>
+                </div>
+
+                <!-- Quick Action Buttons: Open Portal, WhatsApp, Email -->
+                <div class="share-actions-grid">
+                    <a href="{{ public_event_url }}" target="_blank" rel="noopener" class="share-action-tile tile-portal">
+                        <div class="tile-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                        </div>
+                        <div class="tile-text">
+                            <strong>Open Portal</strong>
+                            <span>Preview Guest UI</span>
+                        </div>
+                    </a>
+
+                    <a href="https://api.whatsapp.com/send?text=Find%20your%20event%20photos%20with%20a%20quick%20selfie%20at%20{{ public_event_url|urlencode }}" target="_blank" rel="noopener" class="share-action-tile tile-whatsapp">
+                        <div class="tile-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="tile-text">
+                            <strong>WhatsApp</strong>
+                            <span>Send to client</span>
+                        </div>
+                    </a>
+
+                    <a href="mailto:?subject=Your%20Event%20Photos%20Portal%20-%20{{ event.name|urlencode }}&body=Hi%2C%0A%0AHere%20is%20your%20guest%20photo%20portal%20where%20you%20can%20find%20your%20photos%20using%20facial%20recognition%3A%0A{{ public_event_url|urlencode }}%0A%0AEnjoy!" class="share-action-tile tile-email">
+                        <div class="tile-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                        <div class="tile-text">
+                            <strong>Email</strong>
+                            <span>Share link</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-modal-cancel" data-close-modal="share-event-modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
-
 </html>
