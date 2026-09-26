@@ -148,6 +148,13 @@ def build_event_ai_database(event):
             ]
         )
 
+        try:
+            from .person_clustering import cluster_event_people
+            cluster_event_people(event)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Face clustering failed for event %s", event.id)
+
         return result
 
     except Exception:
@@ -177,6 +184,14 @@ def process_pending_event_photos(event):
     )
 
     if not pending_photos:
+        if event.ai_status == "processing":
+            event.ai_status = "ready" if event.photos.exists() else "pending"
+            event.save(
+                update_fields=[
+                    "ai_status",
+                    "updated_at"
+                ]
+            )
 
         return {
             "success": True,
@@ -196,9 +211,8 @@ def process_pending_event_photos(event):
         ]
     )
 
-    mark_photos_processing(
-        pending_photos
-    )
+    # Keep photos in 'pending' status in DB so UI displays queued state;
+    # Each photo transitions to 'processing' individually when face extraction begins.
 
     try:
 
@@ -214,9 +228,26 @@ def process_pending_event_photos(event):
             build_incremental_event_ai_database
         )
 
+        def _on_started(img_id):
+            from ..models import EventPhoto
+            p = EventPhoto.objects.filter(id=img_id).first()
+            if p:
+                if not p.thumbnail:
+                    try:
+                        p.generate_thumbnail()
+                    except Exception:
+                        pass
+                EventPhoto.objects.filter(id=img_id).update(processing_status="processing")
+
+        def _on_processed(img_id):
+            from ..models import EventPhoto
+            EventPhoto.objects.filter(id=img_id).update(processing_status="completed")
+
         result = build_incremental_event_ai_database(
             event_id=event.id,
-            image_records=image_records
+            image_records=image_records,
+            on_photo_started=_on_started,
+            on_photo_processed=_on_processed,
         )
 
         mark_photos_completed(
@@ -231,6 +262,13 @@ def process_pending_event_photos(event):
                 "updated_at"
             ]
         )
+
+        try:
+            from .person_clustering import cluster_event_people
+            cluster_event_people(event)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Auto face clustering failed for event %s", event.id)
 
         return {
             "success": True,

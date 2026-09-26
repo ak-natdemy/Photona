@@ -4,26 +4,32 @@ detector.py
 This module contains all functions related to:
 
 1. Loading the InsightFace model.
-2. Processing event images.
-3. Processing query images (Coming Next).
+2. Processing event images with in-memory downscaling (preserving master files on disk).
+3. Processing query images.
 """
 
+import os
 from pathlib import Path
+
+# Limit background worker thread contention on CPU
+os.environ.setdefault("OMP_NUM_THREADS", "2")
+os.environ.setdefault("MKL_NUM_THREADS", "2")
 
 import cv2
 import numpy as np
 
+# Set OpenCV threads to prevent CPU saturation
+cv2.setNumThreads(2)
+
 import warnings
 warnings.filterwarnings("ignore")
 
-# import logging
-# logger = logging.getLogger(__name__)
-
 from insightface.app import FaceAnalysis
 
-from config import MODEL_NAME, DETECTION_SIZE
+from config import MODEL_NAME, DETECTION_SIZE, MAX_DETECTION_DIM
 
 import faiss
+
 
 # ==========================================================
 # Load Face Detection Model
@@ -63,6 +69,12 @@ def process_image(
     """
     Process a single event image.
 
+    Note:
+    Downscaling happens ONLY in-memory to prevent system lockups.
+    The original image file on disk is never altered or modified.
+    Bounding box coordinates are scaled back to match the original
+    full-resolution image file.
+
     Parameters
     ----------
     image_path : str | Path
@@ -77,9 +89,7 @@ def process_image(
     Returns
     -------
     tuple
-
         image_record : dict
-
         face_records : list
     """
 
@@ -90,14 +100,22 @@ def process_image(
     image = cv2.imread(str(image_path))
 
     if image is None:
-
         print(f"Could not read image: {image_path}")
-        # logger.warning(f"Could not read image: {image_path}")
-
         return None, []
 
+    orig_h, orig_w = image.shape[:2]
+    max_dim = max(orig_h, orig_w)
+    scale = 1.0
+
+    # In-memory resize to limit RAM allocation (original file on disk remains untouched)
+    if max_dim > MAX_DETECTION_DIM:
+        scale = MAX_DETECTION_DIM / float(max_dim)
+        new_w = max(1, int(round(orig_w * scale)))
+        new_h = max(1, int(round(orig_h * scale)))
+        image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
     # --------------------------------------------------
-    # Convert BGR → RGB
+    # Convert BGR -> RGB
     # --------------------------------------------------
 
     image = cv2.cvtColor(
@@ -112,7 +130,6 @@ def process_image(
     faces = app.get(image)
 
     if len(faces) == 0:
-
         return None, []
 
     # --------------------------------------------------
@@ -120,15 +137,10 @@ def process_image(
     # --------------------------------------------------
 
     image_record = {
-
         "image_id": image_id,
-
         "filename": Path(image_path).name,
-
         "image_path": str(image_path),
-
         "total_faces": len(faces)
-
     }
 
     # --------------------------------------------------
@@ -138,13 +150,20 @@ def process_image(
     face_records = []
 
     for face in faces:
+        # Scale bounding box back to original master file resolution
+        if hasattr(face, "bbox") and face.bbox is not None:
+            if scale != 1.0:
+                scaled_bbox = (face.bbox / scale).astype(int).tolist()
+            else:
+                scaled_bbox = face.bbox.astype(int).tolist()
+        else:
+            scaled_bbox = None
 
         face_record = {
-
             "image_id": image_id,
-
-            "embedding": face.embedding.astype(np.float32)
-
+            "embedding": face.embedding.astype(np.float32),
+            "bbox": scaled_bbox,
+            "det_score": float(face.det_score) if hasattr(face, "det_score") else 1.0,
         }
 
         face_records.append(face_record)
@@ -161,7 +180,7 @@ def process_query_image(
     app
 ):
     """
-    Process a query (selfie) image.
+    Process a query (selfie) image with in-memory downscaling.
 
     Returns
     -------
@@ -180,16 +199,22 @@ def process_query_image(
     image = cv2.imread(str(image_path))
 
     if image is None:
-
-        print(
-            f"Could not read image: {image_path}"
-        )
-
+        print(f"Could not read image: {image_path}")
         return {
             "success": False,
             "status": "invalid_image",
             "embedding": None,
         }
+
+    orig_h, orig_w = image.shape[:2]
+    max_dim = max(orig_h, orig_w)
+
+    # In-memory resize if selfie is high-res (e.g. 12MP/48MP)
+    if max_dim > MAX_DETECTION_DIM:
+        scale = MAX_DETECTION_DIM / float(max_dim)
+        new_w = max(1, int(round(orig_w * scale)))
+        new_h = max(1, int(round(orig_h * scale)))
+        image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
     # --------------------------------------------------
     # Convert BGR -> RGB
@@ -211,9 +236,7 @@ def process_query_image(
     # --------------------------------------------------
 
     if len(faces) == 0:
-
         print("No face detected.")
-
         return {
             "success": False,
             "status": "no_face",
@@ -225,11 +248,7 @@ def process_query_image(
     # --------------------------------------------------
 
     if len(faces) > 1:
-
-        print(
-            "Please upload an image containing only one face."
-        )
-
+        print("Please upload an image containing only one face.")
         return {
             "success": False,
             "status": "multiple_faces",

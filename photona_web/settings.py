@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-0ynv#25*xp76x32$wm#p3y^xyzvxp3l5*w*np(^*&w$!y1$um#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -156,3 +156,14 @@ CELERY_TIMEZONE = "Asia/Kolkata"
 SITE_URL = "http://127.0.0.1:8000"
 
 LOGIN_URL = "login"
+# --------------------------------------------------------------------------
+# Batch Upload Limits for Event Photography
+# --------------------------------------------------------------------------
+# Default Django limit is 100 files; increased to 2,500 files per batch upload
+DATA_UPLOAD_MAX_NUMBER_FILES = 2500
+
+# Maximum request body size for multipart form boundaries (100MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
+
+# In-memory file upload buffer size before spooling to disk (10MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760

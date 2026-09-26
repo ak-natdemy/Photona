@@ -41,7 +41,12 @@ def load_existing_event_database(event_id):
     )
 
 
-def build_incremental_event_ai_database(event_id, image_records):
+def build_incremental_event_ai_database(
+    event_id,
+    image_records,
+    on_photo_started=None,
+    on_photo_processed=None,
+):
     """
     Incrementally build or update the AI database for an event.
 
@@ -55,7 +60,9 @@ def build_incremental_event_ai_database(event_id, image_records):
 
     processed_image_records, new_face_records = process_event(
         image_records=image_records,
-        app=app
+        app=app,
+        on_photo_started=on_photo_started,
+        on_photo_processed=on_photo_processed,
     )
 
     try:

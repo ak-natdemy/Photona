@@ -9,7 +9,12 @@
 
     <title>Login | Photona</title>
 
-    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=3.0">
 </head>
 
 <body>
@@ -50,18 +55,25 @@
                         name="username"
                         required
                         autocomplete="username"
+                        placeholder="Enter your username"
+                        autofocus
                     >
                 </div>
 
 
-                <!-- Password -->
+                <!-- Password with Eye Icon & Forgot Password -->
                 <div>
 
-                    <label for="password">
-                        Password
-                    </label>
+                    <div class="field-label-row">
+                        <label for="password">
+                            Password
+                        </label>
+                        <a href="javascript:void(0)" class="forgot-link" id="open-forgot-modal">
+                            Forgot password?
+                        </a>
+                    </div>
 
-                    <div>
+                    <div class="password-wrapper">
 
                         <input
                             type="password"
@@ -69,13 +81,26 @@
                             name="password"
                             required
                             autocomplete="current-password"
+                            placeholder="Enter your password"
                         >
 
                         <button
                             type="button"
                             id="toggle-password"
+                            class="toggle-eye-btn"
+                            aria-label="Toggle password visibility"
+                            title="Toggle password visibility"
                         >
-                            Show
+                            <!-- Eye Open Icon -->
+                            <svg class="eye-icon eye-show" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                            </svg>
+                            <!-- Eye Slash Icon (Hidden by default) -->
+                            <svg class="eye-icon eye-hide" viewBox="0 0 20 20" fill="currentColor" style="display: none;">
+                                <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.064 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                            </svg>
                         </button>
 
                     </div>
@@ -107,7 +132,43 @@
     </main>
 
 
-    <script src="{% static 'js/login.js' %}"></script>
+    <!-- ================= DUMMY FORGOT PASSWORD MODAL ================= -->
+    <div class="modal-backdrop" id="forgot-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" id="close-forgot-modal" aria-label="Close dialog">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+
+            <div class="modal-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+            </div>
+
+            <h3 id="modal-title">Reset Password</h3>
+            <p class="modal-desc">Enter your registered email address and we'll dispatch password recovery instructions.</p>
+
+            <div id="dummy-alert" class="dummy-alert" style="display: none;"></div>
+
+            <form id="dummy-forgot-form">
+                <div class="modal-input-group">
+                    <label for="reset-email">Email Address</label>
+                    <input type="email" id="reset-email" placeholder="name@yourstudio.com" required>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-modal-cancel" id="cancel-forgot-modal">Cancel</button>
+                    <button type="submit" class="btn-modal-submit" id="btn-send-reset">Send Instructions</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="{% static 'js/login.js' %}?v=3.0"></script>
 
 </body>
 

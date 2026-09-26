@@ -1,0 +1,596 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plans & Recharge | Photona Studio</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=3.2">
+    <link rel="stylesheet" href="{% static 'css/plans.css' %}?v=1.0">
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="dashboard-layout">
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-mark">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">PHOTONA</span>
+                    <span class="brand-sub">Studio Suite</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-group-label">Main Menu</div>
+                <a href="{% url 'dashboard' %}" class="nav-link nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="{% url 'dashboard' %}#event-albums-section" class="nav-link nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Events</span>
+                </a>
+
+                <a href="{% url 'plans' %}" class="nav-link nav-item active" id="nav-btn-plans">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    <span>Plans & Recharge</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="tenant-card">
+                    <div class="tenant-avatar">
+                        {{ tenant.name|first|upper }}
+                    </div>
+                    <div class="tenant-details">
+                        <span class="tenant-title" title="{{ tenant.name }}">{{ tenant.name }}</span>
+                        <span class="tenant-sub">{{ user.username }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}" class="logout-button logout-link" title="Logout">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Log Out</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="main-viewport">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left-group">
+                    <button type="button" class="mobile-menu-button" id="mobile-menu-btn" aria-label="Toggle navigation menu">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+
+                    <div class="topbar-title-area">
+                        <h1 class="topbar-main-title">Plans & Subscription Management</h1>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <a href="{% url 'dashboard' %}" class="btn-topbar-back">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Back to Dashboard</span>
+                    </a>
+                </div>
+            </header>
+
+            <div class="viewport-scroll-area">
+                <div class="plans-page-container">
+
+                    <!-- ================= HERO: CURRENT MEMBERSHIP & QUOTAS ================= -->
+                    <section class="current-plan-card">
+                        <div class="current-plan-header">
+                            <div class="plan-info">
+                                <div class="plan-badge-row">
+                                    <span class="plan-badge-active">
+                                        <span class="pulse-dot"></span>
+                                        Active Membership
+                                    </span>
+                                    <span class="billing-frequency">{{ current_tier.billing_cycle }} Billing</span>
+                                </div>
+                                <h2 class="current-tier-title">{{ current_tier.name }}</h2>
+                                <p class="current-tier-meta">
+                                    Renews on <strong>{{ current_tier.renewal_date }}</strong> at <strong>{{ current_tier.price }}/month</strong>. Next automated invoice sent to {{ tenant.email }}.
+                                </p>
+                            </div>
+                            <div class="current-plan-actions">
+                                <button type="button" class="btn-change-plan" onclick="scrollToSection('subscription-plans')">
+                                    Upgrade / Change Plan
+                                </button>
+                                <button type="button" class="btn-quick-recharge" onclick="openRechargeModal('AI Boost 5K', '$12.00')">
+                                    ⚡ Quick Recharge
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Resource Quotas Overview -->
+                        <div class="quotas-grid">
+                            <!-- Quota 1: Photo Storage -->
+                            <div class="quota-item">
+                                <div class="quota-meta">
+                                    <span class="quota-label">Photo Storage Vault</span>
+                                    <span class="quota-fraction"><strong>{{ total_photos }}</strong> / 50,000 photos</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-bar progress-amber" style="width: {{ photo_usage_pct|default:5 }}%;"></div>
+                                </div>
+                                <div class="quota-sub">
+                                    <span>{{ photo_usage_pct }}% of quota consumed</span>
+                                    <span class="quota-add-link" onclick="openRechargeModal('Storage Pack (+25k Photos)', '$18.00')">+ Add Storage</span>
+                                </div>
+                            </div>
+
+                            <!-- Quota 2: Active Events -->
+                            <div class="quota-item">
+                                <div class="quota-meta">
+                                    <span class="quota-label">Active Event Galleries</span>
+                                    <span class="quota-fraction"><strong>{{ active_events }}</strong> / 25 albums</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-bar progress-emerald" style="width: {{ event_usage_pct|default:12 }}%;"></div>
+                                </div>
+                                <div class="quota-sub">
+                                    <span>{{ active_events }} live client portals</span>
+                                    <span class="quota-status-text">Good Standing</span>
+                                </div>
+                            </div>
+
+                            <!-- Quota 3: AI Face Searches -->
+                            <div class="quota-item">
+                                <div class="quota-meta">
+                                    <span class="quota-label">AI Face Match Searches</span>
+                                    <span class="quota-fraction"><strong>{{ ai_searches_used }}</strong> / 10,000 queries</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-bar progress-purple" style="width: {{ ai_usage_pct|default:18 }}%;"></div>
+                                </div>
+                                <div class="quota-sub">
+                                    <span>512-D High-Speed Neural Index</span>
+                                    <span class="quota-add-link" onclick="openRechargeModal('AI Boost Pack (+5k Searches)', '$12.00')">+ Top-Up AI</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ================= SUBSCRIPTION PLANS SECTION ================= -->
+                    <section class="section-block" id="subscription-plans">
+                        <div class="section-header-centered">
+                            <span class="section-pill">STUDIO TIERS</span>
+                            <h2 class="section-title">Flexible Plans Built for Photography Studios</h2>
+                            <p class="section-desc">Scale effortlessly with private storage, fast client delivery, and state-of-the-art AI facial search.</p>
+
+                            <!-- Billing Switcher Toggle -->
+                            <div class="billing-switcher-container">
+                                <span class="switcher-label" id="label-monthly">Monthly</span>
+                                <button type="button" class="billing-toggle-btn" id="billing-toggle" aria-label="Toggle Annual and Monthly billing" aria-pressed="false">
+                                    <span class="toggle-slider"></span>
+                                </button>
+                                <span class="switcher-label" id="label-annual">
+                                    Annual
+                                    <span class="discount-pill">Save 20% + 2 Mo Free</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Pricing Cards Grid -->
+                        <div class="pricing-cards-grid">
+
+                            <!-- Tier 1: Starter -->
+                            <div class="pricing-card">
+                                <div class="card-head">
+                                    <h3 class="tier-name">Solo Starter</h3>
+                                    <p class="tier-for">Ideal for freelance photographers and boutique weekend shoots.</p>
+                                    <div class="tier-price-row">
+                                        <span class="currency">$</span>
+                                        <span class="price-val" data-monthly="29" data-annual="23">29</span>
+                                        <span class="price-cycle">/month</span>
+                                    </div>
+                                    <div class="annual-note" style="display: none;">Billed $276 annually</div>
+                                </div>
+
+                                <ul class="tier-feature-list">
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Up to <strong>5 Active Events</strong></span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span><strong>15,000 Photos</strong> Storage</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Standard AI Face Search (2,000 queries)</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Client Mobile & Web Galleries</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Standard Email Support</span>
+                                    </li>
+                                </ul>
+
+                                <div class="card-footer-action">
+                                    <button type="button" class="btn-tier btn-tier-secondary" onclick="openPlanModal('Solo Starter', '$29/mo')">
+                                        Switch to Starter
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tier 2: Studio Pro (MOST POPULAR / CURRENT) -->
+                            <div class="pricing-card card-featured">
+                                <div class="popular-ribbon">MOST POPULAR</div>
+                                <div class="card-head">
+                                    <h3 class="tier-name">Studio Pro</h3>
+                                    <p class="tier-for">Tailored for active photography businesses and busy wedding studios.</p>
+                                    <div class="tier-price-row">
+                                        <span class="currency">$</span>
+                                        <span class="price-val" data-monthly="49" data-annual="39">49</span>
+                                        <span class="price-cycle">/month</span>
+                                    </div>
+                                    <div class="annual-note" style="display: none;">Billed $468 annually</div>
+                                </div>
+
+                                <ul class="tier-feature-list">
+                                    <li>
+                                        <svg class="check-svg check-gold" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Up to <strong>25 Active Events</strong></span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg check-gold" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span><strong>50,000 Photos</strong> Vault Storage</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg check-gold" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span><strong>10,000 AI Face Searches</strong> (512-D High Acc.)</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg check-gold" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>QR Code Selfies & WhatsApp Instant Share</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg check-gold" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Custom Watermark & Studio Branding</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg check-gold" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Priority 24/7 Processing Queue</span>
+                                    </li>
+                                </ul>
+
+                                <div class="card-footer-action">
+                                    <button type="button" class="btn-tier btn-tier-current" disabled>
+                                        ✓ Current Plan
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tier 3: Enterprise -->
+                            <div class="pricing-card">
+                                <div class="card-head">
+                                    <h3 class="tier-name">Agency & Enterprise</h3>
+                                    <p class="tier-for">Built for production agencies managing massive events and multiple crews.</p>
+                                    <div class="tier-price-row">
+                                        <span class="currency">$</span>
+                                        <span class="price-val" data-monthly="119" data-annual="95">119</span>
+                                        <span class="price-cycle">/month</span>
+                                    </div>
+                                    <div class="annual-note" style="display: none;">Billed $1,140 annually</div>
+                                </div>
+
+                                <ul class="tier-feature-list">
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span><strong>Unlimited Active Events</strong></span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span><strong>250,000+ Photos</strong> High-Speed Storage</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Dedicated GPU AI Facial Processing</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>White-Label Custom Domain (CNAME)</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Up to 10 Multi-User Photographer Accounts</span>
+                                    </li>
+                                    <li>
+                                        <svg class="check-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        <span>Dedicated Account Manager & 99.9% SLA</span>
+                                    </li>
+                                </ul>
+
+                                <div class="card-footer-action">
+                                    <button type="button" class="btn-tier btn-tier-primary" onclick="openPlanModal('Agency & Enterprise', '$119/mo')">
+                                        Upgrade to Enterprise
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- ================= INSTANT ON-DEMAND RECHARGE SECTION ================= -->
+                    <section class="section-block">
+                        <div class="section-header-row">
+                            <div>
+                                <span class="section-pill">ON-DEMAND BOOST</span>
+                                <h2 class="section-title">Instant Resource Recharge</h2>
+                                <p class="section-desc">Got a peak season or high-volume wedding? Top up your credits instantly without upgrading your monthly plan.</p>
+                            </div>
+                        </div>
+
+                        <div class="recharge-cards-grid">
+
+                            <!-- Recharge 1: AI Search Boost -->
+                            <div class="recharge-card">
+                                <div class="recharge-icon-wrap amber">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                </div>
+                                <div class="recharge-details">
+                                    <h3 class="recharge-title">AI Facial Search Boost</h3>
+                                    <p class="recharge-desc">+5,000 instant guest selfie face match queries with 512-D neural precision.</p>
+                                    <div class="recharge-price-tag">
+                                        <strong>$12.00</strong> <span>one-time</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-recharge-action" onclick="openRechargeModal('AI Facial Search Boost (+5,000 Queries)', '$12.00')">
+                                    ⚡ Recharge Now
+                                </button>
+                            </div>
+
+                            <!-- Recharge 2: Storage Pack -->
+                            <div class="recharge-card">
+                                <div class="recharge-icon-wrap emerald">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                        <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                                        <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                                    </svg>
+                                </div>
+                                <div class="recharge-details">
+                                    <h3 class="recharge-title">Extra 25,000 Photo Storage</h3>
+                                    <p class="recharge-desc">Add 25,000 additional photo slots to your studio vault with high-speed CDN delivery.</p>
+                                    <div class="recharge-price-tag">
+                                        <strong>$18.00</strong> <span>one-time</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-recharge-action" onclick="openRechargeModal('Extra Storage Pack (+25,000 Photos)', '$18.00')">
+                                    ⚡ Add Storage
+                                </button>
+                            </div>
+
+                            <!-- Recharge 3: Turbo Priority -->
+                            <div class="recharge-card">
+                                <div class="recharge-icon-wrap purple">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="recharge-details">
+                                    <h3 class="recharge-title">Turbo GPU Event Priority</h3>
+                                    <p class="recharge-desc">Fast-track photo clustering to high-priority GPU nodes for instant same-day guest access.</p>
+                                    <div class="recharge-price-tag">
+                                        <strong>$9.00</strong> <span>per event</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-recharge-action" onclick="openRechargeModal('Turbo GPU Event Priority', '$9.00')">
+                                    ⚡ Activate Turbo
+                                </button>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- ================= BILLING INVOICES & HISTORY ================= -->
+                    <section class="section-block">
+                        <div class="section-header-row">
+                            <div>
+                                <span class="section-pill">BILLING AUDIT</span>
+                                <h2 class="section-title">Invoice & Recharge History</h2>
+                                <p class="section-desc">Download past receipts and monitor recent subscription renewals.</p>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="invoices-table">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice ID</th>
+                                        <th>Date</th>
+                                        <th>Plan / Item Description</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Receipt</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for inv in recent_invoices %}
+                                        <tr>
+                                            <td><strong>{{ inv.id }}</strong></td>
+                                            <td>{{ inv.date }}</td>
+                                            <td>{{ inv.item }}</td>
+                                            <td><strong>{{ inv.amount }}</strong></td>
+                                            <td>
+                                                <span class="status-badge-paid">
+                                                    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                    {{ inv.status }}
+                                                </span>
+                                            </td>
+                                            <td class="text-right">
+                                                <button type="button" class="btn-download-receipt" onclick="alert('Downloading {{ inv.id }} receipt PDF...')">
+                                                    Download PDF
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">No previous billing records found.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- ================= FAQ SECTION ================= -->
+                    <section class="section-block">
+                        <div class="section-header-centered">
+                            <span class="section-pill">FREQUENTLY ASKED QUESTIONS</span>
+                            <h2 class="section-title">Everything You Need to Know</h2>
+                            <p class="section-desc">Got questions about Photona's billing and on-demand resource recharge?</p>
+                        </div>
+
+                        <div class="faq-accordion-list">
+                            <div class="faq-item">
+                                <button type="button" class="faq-trigger" aria-expanded="false">
+                                    <span>How do AI Facial Search credits work?</span>
+                                    <svg class="chevron-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                                </button>
+                                <div class="faq-content">
+                                    <p>When wedding or event guests take a selfie on their phone to locate their photos, our neural face matching engine searches the album. Each search query consumes 1 credit. Monthly plan credits replenish automatically at the beginning of each billing cycle.</p>
+                                </div>
+                            </div>
+
+                            <div class="faq-item">
+                                <button type="button" class="faq-trigger" aria-expanded="false">
+                                    <span>Do on-demand recharge credits expire?</span>
+                                    <svg class="chevron-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                                </button>
+                                <div class="faq-content">
+                                    <p>No! Any top-up packs (such as Extra Storage or AI Search Boost) purchased via Instant Recharge never expire and remain in your studio vault as long as your account is active.</p>
+                                </div>
+                            </div>
+
+                            <div class="faq-item">
+                                <button type="button" class="faq-trigger" aria-expanded="false">
+                                    <span>Can I change or cancel my plan at any time?</span>
+                                    <svg class="chevron-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                                </button>
+                                <div class="faq-content">
+                                    <p>Yes. You can upgrade, downgrade, or switch between Monthly and Annual billing whenever needed. Upgrades take effect immediately with pro-rated billing, while downgrades apply at the end of the current billing cycle.</p>
+                                </div>
+                            </div>
+
+                            <div class="faq-item">
+                                <button type="button" class="faq-trigger" aria-expanded="false">
+                                    <span>What payment methods are supported?</span>
+                                    <svg class="chevron-svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                                </button>
+                                <div class="faq-content">
+                                    <p>We support all major Credit and Debit Cards (Visa, Mastercard, Amex), UPI, Net Banking, and automated recurring billing with instant PDF tax invoice generation.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= CHECKOUT / RECHARGE MODAL ================= -->
+    <div class="checkout-modal-backdrop" id="checkout-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="checkout-modal-card">
+            <button type="button" class="btn-modal-close" onclick="closeCheckoutModal()" aria-label="Close modal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="modal-badge-amber">
+                <span>✦</span>
+                <span>SECURE CHECKOUT</span>
+            </div>
+
+            <h3 class="checkout-item-title" id="checkout-item-name">AI Facial Search Boost</h3>
+            <div class="checkout-price-display">
+                <span class="checkout-amt" id="checkout-item-price">$12.00</span>
+                <span class="checkout-sub">billed to {{ tenant.name }}</span>
+            </div>
+
+            <div class="payment-method-selector">
+                <label class="pay-option selected">
+                    <input type="radio" name="pay_method" value="card" checked>
+                    <div class="pay-meta">
+                        <strong>Credit / Debit Card</strong>
+                        <span>Visa •••• 4242</span>
+                    </div>
+                </label>
+                <label class="pay-option">
+                    <input type="radio" name="pay_method" value="upi">
+                    <div class="pay-meta">
+                        <strong>UPI / Net Banking</strong>
+                        <span>Instant QR & VPA Payment</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="checkout-actions">
+                <button type="button" class="btn-cancel-checkout" onclick="closeCheckoutModal()">Cancel</button>
+                <button type="button" class="btn-confirm-checkout" id="btn-pay-now" onclick="processCheckout()">
+                    <span>Confirm & Pay Now</span>
+                </button>
+            </div>
+
+            <p class="checkout-security-notice">
+                🔒 256-bit TLS encrypted transaction • Instant receipt sent to {{ tenant.email }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/plans.js' %}?v=1.0"></script>
+</body>
+</html>

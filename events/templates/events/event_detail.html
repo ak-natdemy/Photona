@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ event.name }} | Photona Studio Suite</title>
-    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v=4.0">
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v=5.3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -290,17 +290,59 @@
                                             </svg>
                                         </div>
                                         <h4 class="dropzone-title">Drag & Drop event photos, or <span class="dropzone-link">browse</span></h4>
-                                        <p class="dropzone-hint">Supports high-res JPG, PNG, and WebP up to 20MB.</p>
+                                        <p class="dropzone-hint">Supports high-res JPG, PNG, and WebP up to 20MB · <strong>Max 150 photos per batch</strong></p>
                                     </div>
 
-                                    <!-- Instant Miniature Preview Thumbnails Strip -->
+                                    <!-- Staged Photo Names Scrolling List (No Image Thumbnails) -->
                                     <div class="dropzone-preview-container" id="dropzone-preview-container" style="display: none;">
                                         <div class="preview-header-bar">
-                                            <span class="preview-count-chip" id="preview-count-chip">0 photos selected</span>
-                                            <button type="button" class="btn-clear-selection" id="btn-clear-selected-files">Change Selection</button>
+                                            <div class="preview-header-left">
+                                                <span class="preview-count-chip" id="preview-count-chip">0 photos staged</span>
+                                                <span class="preview-total-size" id="preview-total-size">0 MB</span>
+                                                <button type="button" class="btn-clear-selection" id="btn-clear-selected-files">Clear & Reselect</button>
+                                            </div>
+                                            <div class="preview-header-right">
+                                                <span class="dedup-guarantee-badge">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    Duplicates blocked
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div class="dropzone-thumbnails-strip" id="dropzone-thumbnails-strip">
-                                            <!-- Miniature thumbnails injected instantly via client-side JavaScript -->
+
+                                        <!-- Scrolling List of Photo Names -->
+                                        <div class="staged-names-list-wrapper">
+                                            <div class="staged-names-scroll-list" id="dropzone-names-list">
+                                                <!-- Staged photo names injected cleanly here without image decode overhead -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Live Uploading Progress Overlay -->
+                                    <div class="dropzone-uploading-overlay" id="dropzone-uploading-overlay" style="display: none;">
+                                        <div class="upload-progress-card">
+                                            <div class="upload-progress-top">
+                                                <div class="upload-spinner-ring">
+                                                    <svg class="upload-spin-svg" viewBox="0 0 50 50">
+                                                        <circle class="upload-spin-track" cx="25" cy="25" r="20" fill="none" stroke="#e2e8f0" stroke-width="4"></circle>
+                                                        <circle class="upload-spin-path" cx="25" cy="25" r="20" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"></circle>
+                                                    </svg>
+                                                    <span class="upload-pct-label" id="upload-pct-text">0%</span>
+                                                </div>
+                                                <div class="upload-progress-texts">
+                                                    <h4 class="upload-progress-title" id="upload-progress-title">Uploading Photos...</h4>
+                                                    <span class="upload-progress-subtext" id="upload-status-subtext">Transferring high-resolution files to server...</span>
+                                                </div>
+                                            </div>
+                                            <div class="upload-bar-track">
+                                                <div class="upload-bar-fill" id="upload-bar-fill" style="width: 0%;"></div>
+                                            </div>
+                                            <div class="upload-progress-footer-stats">
+                                                <span class="upload-bytes-text" id="upload-bytes-text">0 MB / 0 MB</span>
+                                                <span class="upload-dedup-badge">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    Auto-deduplication active
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -374,6 +416,35 @@
 
                 <!-- ================= 3. PHOTO CATALOG & DYNAMIC TOOLBAR ================= -->
                 <section class="photos-section" id="photos-section">
+                    <!-- Segmented Tabs Navigation -->
+                    <div class="gallery-tabs-container">
+                        <div class="gallery-tabs-nav" role="tablist">
+                            <button type="button" class="gallery-tab-btn active" id="tab-btn-all" data-tab="all-photos" role="tab" aria-selected="true">
+                                <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span class="tab-title">All Event Photos</span>
+                                <span class="tab-pill-badge" id="tab-count-all">{{ photos|length }}</span>
+                            </button>
+
+                            <button type="button" class="gallery-tab-btn" id="tab-btn-people" data-tab="sorted-people" role="tab" aria-selected="false">
+                                <svg class="tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span class="tab-title">Sorted People</span>
+                                <span class="tab-pill-badge" id="tab-count-people">{{ people|length }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ================= TAB VIEW 1: ALL EVENT PHOTOS ================= -->
+                    <div class="gallery-tab-content active" id="tab-view-all-photos">
+
                     <div class="section-header">
                         <div class="section-heading-left">
                             <div class="section-title-row">
@@ -422,10 +493,41 @@
                             </div>
                         </div>
 
+                        <!-- Live AI Processing Banner (masked until completed, revealed one-by-one) -->
+                        <div class="live-ai-progress-banner {% if has_processing_photos %}is-active{% endif %}" id="live-ai-progress-banner" {% if not has_processing_photos %}style="display: none;"{% endif %}>
+                            <div class="live-progress-icon-wrap">
+                                <div class="live-progress-pulse-circle">
+                                    <svg class="live-ai-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="live-progress-main">
+                                <div class="live-progress-header-row">
+                                    <div class="live-progress-title-col">
+                                        <strong class="live-progress-title" id="live-progress-title">
+                                            {% if processing_photos_count > 0 %}
+                                                AI Indexing In Progress...
+                                            {% else %}
+                                                Photos Uploaded & Queued for Processing
+                                            {% endif %}
+                                        </strong>
+                                        <span class="live-progress-subtitle" id="live-progress-subtitle">Photos remain hidden and reveal one-by-one as AI indexing finishes</span>
+                                    </div>
+                                    <span class="live-progress-counter-chip" id="live-progress-counter-chip">
+                                        <strong id="live-completed-count">{{ completed_photos_count }}</strong> of <strong id="live-total-count">{{ total_photos_count }}</strong> ready
+                                    </span>
+                                </div>
+                                <div class="live-progress-bar-track">
+                                    <div class="live-progress-bar-fill" id="live-progress-bar-fill" style="width: {% if total_photos_count > 0 %}{% widthratio completed_photos_count total_photos_count 100 %}{% else %}0{% endif %}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Little Photo Cards Grid (Point 2: Descending order by last added) -->
                         <div class="photo-cards-grid" id="photo-cards-grid">
                             {% for photo in photos %}
-                                <div class="little-photo-card" id="photo-card-{{ photo.id }}" data-id="{{ photo.id }}" data-status="{{ photo.processing_status }}">
+                                <div class="little-photo-card {% if photo.processing_status != 'completed' and photo.processing_status != 'ready' %}is-processing status-{{ photo.processing_status }}{% endif %}" id="photo-card-{{ photo.id }}" data-id="{{ photo.id }}" data-status="{{ photo.processing_status }}">
                                     <!-- Point 6: Rounded shape semi-transparent check tick box at top right corner -->
                                     <div class="card-select-overlay-right">
                                         <input type="checkbox" class="photo-checkbox sr-checkbox" value="{{ photo.id }}" id="chk-{{ photo.id }}" aria-label="Select photo #{{ forloop.revcounter }}">
@@ -438,8 +540,43 @@
 
                                     <!-- Lightweight Thumbnail Image with Click Preview (Point 4) -->
                                     <div class="photo-thumb-container" data-full-img="{{ photo.image.url }}" data-photo-id="{{ photo.id }}" data-photo-number="{{ forloop.revcounter }}">
-                                        <img src="{{ photo.thumbnail_url }}" alt="{{ event.name }} photo #{{ forloop.revcounter }}" loading="lazy" class="card-photo-img">
+                                        <img src="{{ photo.thumbnail_url }}" alt="{{ event.name }} photo #{{ forloop.revcounter }}" loading="lazy" class="card-photo-img {% if photo.processing_status != 'completed' and photo.processing_status != 'ready' %}img-masked{% endif %}" id="photo-img-{{ photo.id }}">
                                         
+                                        <!-- Real-time Masking & Processing Overlay -->
+                                        <div class="photo-processing-overlay {% if photo.processing_status == 'completed' or photo.processing_status == 'ready' %}is-hidden{% endif %}" id="photo-processing-overlay-{{ photo.id }}">
+                                            <div class="proc-overlay-glass">
+                                                <div class="proc-overlay-spinner-wrap" id="proc-spinner-wrap-{{ photo.id }}">
+                                                    {% if photo.processing_status == "processing" %}
+                                                        <div class="proc-ring-spinner"></div>
+                                                    {% elif photo.processing_status == "failed" %}
+                                                        <div class="proc-failed-icon">
+                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                                                            </svg>
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="proc-pulse-dots">
+                                                            <span class="p-dot"></span>
+                                                            <span class="p-dot"></span>
+                                                            <span class="p-dot"></span>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <span class="proc-overlay-badge" id="proc-badge-{{ photo.id }}">
+                                                    {% if photo.processing_status == "processing" %}
+                                                        Indexing Faces...
+                                                    {% elif photo.processing_status == "failed" %}
+                                                        Failed
+                                                    {% else %}
+                                                        In Queue
+                                                    {% endif %}
+                                                </span>
+                                                
+                                            </div>
+                                        </div>
+
                                         <!-- Hover Action Icons Overlay -->
                                         <div class="card-hover-actions">
                                             <!-- Download single photo icon -->
@@ -524,6 +661,138 @@
                             <p>Choose an ingestion method above to upload shoot files or import directly from Google Drive.</p>
                         </div>
                     {% endif %}
+                    </div> <!-- /#tab-view-all-photos -->
+
+                    <!-- ================= TAB VIEW 2: SORTED PEOPLE ================= -->
+                    <div class="gallery-tab-content" id="tab-view-sorted-people" style="display: none;">
+                        <!-- SUB-VIEW 2A: PEOPLE CARDS GRID -->
+                        <div id="people-catalog-container">
+                            <div class="section-header people-section-header">
+                                <div class="section-heading-left">
+                                    <div class="section-title-row">
+                                        <h2>Sorted People</h2>
+                                        <span class="gallery-badge people-badge"><span id="people-catalog-count">{{ people|length }}</span> People Identified</span>
+                                    </div>
+                                    <p class="section-subtitle-muted">Matching faces are automatically grouped into person classes. Click on any person to view only their photos.</p>
+                                </div>
+                                <div class="section-heading-right">
+                                    <button type="button" class="btn-recluster" id="btn-recluster-people" data-url="{% url 'events:recluster_people' event.id %}" title="Re-scan and group faces">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <polyline points="1 20 1 14 7 14"></polyline>
+                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                        </svg>
+                                        <span id="recluster-btn-text">Refresh People Groups</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {% if people %}
+                                <div class="people-cards-grid" id="people-cards-grid">
+                                    {% for person in people %}
+                                        <div class="person-card" id="person-card-{{ person.id }}" data-person-id="{{ person.id }}" data-person-name="{{ person.name }}">
+                                            <div class="person-avatar-wrap">
+                                                <img src="{{ person.avatar_url }}" alt="{{ person.name }}" class="person-avatar-img" loading="lazy">
+                                                <span class="person-photo-pill">{{ person.photo_count }} photo{{ person.photo_count|pluralize }}</span>
+                                            </div>
+
+                                            <div class="person-info-wrap">
+                                                <div class="person-name-row">
+                                                    <h3 class="person-name-display" id="person-name-txt-{{ person.id }}">{{ person.name }}</h3>
+                                                    <button type="button" class="btn-edit-person-name" data-person-id="{{ person.id }}" title="Rename person">
+                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <span class="person-faces-meta">{{ person.face_count }} face instance{{ person.face_count|pluralize }}</span>
+                                            </div>
+
+                                            <div class="person-card-actions">
+                                                <button type="button" class="btn-view-person-photos" data-person-id="{{ person.id }}">
+                                                    <span>View Photos</span>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                                    </svg>
+                                                </button>
+                                                <a href="{% url 'events:download_person_photos' event.id person.id %}" class="btn-download-person-zip" title="Download all photos of {{ person.name }} as ZIP" download>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="empty-state-panel">
+                                    <div class="empty-icon-circle">
+                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                    </div>
+                                    <h3>No People Clustered Yet</h3>
+                                    <p>Upload photos and run facial indexing to automatically group and classify matching faces.</p>
+                                    <button type="button" class="btn-bulk-action btn-bulk-primary" id="btn-initial-cluster" data-url="{% url 'events:recluster_people' event.id %}" style="margin-top: 0.75rem;">
+                                        <span>Sort People Now</span>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- SUB-VIEW 2B: PERSON PHOTO DRILL-DOWN COLLECTION -->
+                        <div id="person-drilldown-container" style="display: none;">
+                            <div class="drilldown-header-bar">
+                                <button type="button" class="btn-back-to-people" id="btn-back-to-people">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                                        <polyline points="12 19 5 12 12 5"></polyline>
+                                    </svg>
+                                    <span>All People</span>
+                                </button>
+
+                                <div class="drilldown-person-summary">
+                                    <div class="drilldown-person-avatar-ring">
+                                        <img id="drilldown-avatar-img" src="" alt="Person avatar">
+                                    </div>
+                                    <div class="drilldown-person-text">
+                                        <div class="drilldown-title-row">
+                                            <h2 id="drilldown-person-name">Person Name</h2>
+                                            <button type="button" class="btn-edit-person-name" id="btn-drilldown-rename" title="Rename person">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <span class="drilldown-count-tag" id="drilldown-photo-count">0 photos</span>
+                                    </div>
+                                </div>
+
+                                <div class="drilldown-header-actions">
+                                    <a href="#" class="btn-bulk-action btn-bulk-primary" id="btn-drilldown-download-zip" download>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                        <span>Download Person Photos (ZIP)</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Person Photos Grid (Uses Thumbnails in grid, click opens full-res preview) -->
+                            <div class="photo-cards-grid person-photos-grid" id="person-photos-grid">
+                                <!-- Populated dynamically by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                 </section>
             </div>
         </main>
@@ -604,77 +873,96 @@
 
     <!-- ================= SINGLE PHOTO DELETE CONFIRMATION MODAL ================= -->
     <div class="modal-dialog-backdrop" id="delete-photo-modal" aria-hidden="true" role="dialog" aria-modal="true">
-        <div class="modal-dialog-panel modal-panel-sm">
-            <div class="modal-header">
-                <div class="modal-header-text">
-                    <div class="modal-badge-pill modal-badge-danger">DELETE PHOTO</div>
-                    <h2>Delete Photo?</h2>
-                </div>
-                <button type="button" class="modal-close-btn" data-close-modal="delete-photo-modal" aria-label="Close modal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
+        <div class="modal-dialog-panel modal-panel-minimal-delete">
+            <button type="button" class="modal-close-minimal" data-close-modal="delete-photo-modal" aria-label="Close modal">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
 
-            <div class="modal-body-copy">
-                <p>Are you sure you want to permanently delete photo <strong id="delete-photo-label">#</strong>?</p>
-                <p class="text-danger-sub">This will remove the image file and its facial embedding index.</p>
-            </div>
-
-            <form action="" method="POST" id="delete-photo-form">
-                {% csrf_token %}
-                <div class="modal-footer-actions">
-                    <button type="button" class="btn-modal-cancel" data-close-modal="delete-photo-modal">Cancel</button>
-                    <button type="submit" class="btn-danger-action">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="delete-modal-inner">
+                <div class="delete-icon-halo">
+                    <div class="delete-icon-circle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
                         </svg>
-                        <span>Yes, Delete</span>
-                    </button>
+                    </div>
                 </div>
-            </form>
+
+                <div class="delete-modal-text">
+                    <h3 class="delete-modal-title">Delete Photo</h3>
+                    <p class="delete-modal-desc">
+                        Are you sure you want to permanently delete photo <span class="delete-target-chip" id="delete-photo-label">#1</span>? This action cannot be undone.
+                    </p>
+                </div>
+
+                <form action="" method="POST" id="delete-photo-form" class="delete-modal-form">
+                    {% csrf_token %}
+                    <div class="delete-modal-actions">
+                        <button type="button" class="btn-delete-cancel" data-close-modal="delete-photo-modal">Cancel</button>
+                        <button type="submit" class="btn-delete-confirm">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- ================= BULK DELETE PHOTOS MODAL ================= -->
     <div class="modal-dialog-backdrop" id="bulk-delete-modal" aria-hidden="true" role="dialog" aria-modal="true">
-        <div class="modal-dialog-panel modal-panel-sm">
-            <div class="modal-header">
-                <div class="modal-header-text">
-                    <div class="modal-badge-pill modal-badge-danger">BULK DELETE</div>
-                    <h2>Delete Selected Photos?</h2>
-                </div>
-                <button type="button" class="modal-close-btn" data-close-modal="bulk-delete-modal" aria-label="Close modal">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
+        <div class="modal-dialog-panel modal-panel-minimal-delete">
+            <button type="button" class="modal-close-minimal" data-close-modal="bulk-delete-modal" aria-label="Close modal">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
 
-            <div class="modal-body-copy">
-                <p>Are you sure you want to permanently delete <strong id="bulk-delete-count-text">0 selected photos</strong>?</p>
-                <p class="text-danger-sub">This action cannot be undone.</p>
-            </div>
-
-            <form action="{% url 'events:bulk_delete_photos' event.id %}" method="POST" id="bulk-delete-form">
-                {% csrf_token %}
-                <input type="hidden" name="ids" id="bulk-delete-ids-input" value="">
-                <input type="hidden" name="next" value="{% url 'events:detail' event.id %}">
-                <div class="modal-footer-actions">
-                    <button type="button" class="btn-modal-cancel" data-close-modal="bulk-delete-modal">Cancel</button>
-                    <button type="submit" class="btn-danger-action">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="delete-modal-inner">
+                <div class="delete-icon-halo">
+                    <div class="delete-icon-circle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
                         </svg>
-                        <span>Yes, Delete Selected</span>
-                    </button>
+                    </div>
                 </div>
-            </form>
+
+                <div class="delete-modal-text">
+                    <h3 class="delete-modal-title">Delete Selected Photos</h3>
+                    <p class="delete-modal-desc">
+                        Are you sure you want to permanently delete <span class="delete-target-chip" id="bulk-delete-count-text">0 selected photos</span>? All files and face indexing will be permanently removed.
+                    </p>
+                </div>
+
+                <form action="{% url 'events:bulk_delete_photos' event.id %}" method="POST" id="bulk-delete-form" class="delete-modal-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="photo_ids" id="bulk-delete-ids-input" value="">
+                    <input type="hidden" name="ids" id="bulk-delete-ids-input-compat" value="">
+                    <input type="hidden" name="next" value="{% url 'events:detail' event.id %}">
+                    <div class="delete-modal-actions">
+                        <button type="button" class="btn-delete-cancel" data-close-modal="bulk-delete-modal">Cancel</button>
+                        <button type="submit" class="btn-delete-confirm">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Delete Photos</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -723,19 +1011,19 @@
     </div>
 
     <!-- Real-time Polling & Interactive Controls -->
-    <script src="{% static 'js/event_detail.js' %}?v=4.0"></script>
+    <script src="{% static 'js/event_detail.js' %}?v=5.3"></script>
 
-    <!-- ================= SHARE EVENT MODAL (Requirement 5) ================= -->
+        <!-- ================= SHARE EVENT & ACCESS LINKS HUB ================= -->
     <div class="modal-dialog-backdrop" id="share-event-modal" aria-hidden="true" role="dialog" aria-modal="true">
-        <div class="modal-dialog-panel modal-panel-md">
+        <div class="modal-dialog-panel modal-panel-lg share-hub-panel">
             <div class="modal-header">
                 <div class="modal-header-text">
                     <span class="modal-badge-pill">
                         <span>✦</span>
-                        <span>GUEST SELFIE PORTAL</span>
+                        <span>EVENT SHARE & ACCESS HUB</span>
                     </span>
                     <h2>Share "{{ event.name }}"</h2>
-                    <p>Deliver this link to guests so they can upload a selfie and instantly find their photos.</p>
+                    <p>Generate custom guest links, protect with password, set expiration, or allow full album downloads.</p>
                 </div>
                 <button type="button" class="modal-close-btn" data-close-modal="share-event-modal" aria-label="Close modal">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -745,70 +1033,333 @@
                 </button>
             </div>
 
-            <div class="modal-form-body share-modal-body">
-                <!-- Direct Link Input with Copy Button -->
-                <div class="share-link-box">
-                    <label class="form-label">Direct Guest Portal URL</label>
-                    <div class="share-input-group">
-                        <input type="text" id="share-portal-url-input" class="form-input share-url-input" value="{{ public_event_url }}" readonly>
-                        <button type="button" class="btn-copy-link" id="btn-copy-share-url" title="Copy link to clipboard">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                            <span id="copy-btn-text">Copy Link</span>
-                        </button>
+            <div class="modal-form-body share-hub-body">
+                <!-- ================= SECTION 1: GENERATE NEW LINK ================= -->
+                <div class="generate-link-card">
+                    <div class="card-section-title">
+                        <span class="section-icon">⚡</span>
+                        <h3>Generate New Share Link</h3>
                     </div>
-                    <span class="copy-success-tooltip" id="copy-success-feedback" style="display: none;">✓ Link copied to clipboard!</span>
+
+                    <form id="create-share-link-form" class="generate-link-form">
+                        {% csrf_token %}
+                        <!-- Option 2: Full Album Access Toggle (Default Unticked) -->
+                        <div class="form-checkbox-card">
+                            <label class="custom-toggle-label">
+                                <input type="checkbox" id="gen-is-all-photos" name="is_all_photos_accessible" class="custom-toggle-input">
+                                <span class="custom-toggle-switch"></span>
+                                <div class="toggle-text-block">
+                                    <strong class="toggle-title">Allow viewing all event photos without selfie (Full Album)</strong>
+                                    <span class="toggle-desc">Default: Unticked (guests must take a selfie to discover their matching photos).</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Two-Column Optional Fields: Password and Expire Date & Time -->
+                        <div class="generate-form-row">
+                            <!-- Option 1: Password Column (Optional) -->
+                            <div class="form-field-group">
+                                <label for="gen-password" class="field-label">
+                                    <span>Password Protection</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <div class="input-with-icon">
+                                    <span class="input-icon">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                        </svg>
+                                    </span>
+                                    <input type="text" id="gen-password" name="password" class="form-input text-input" placeholder="e.g. secret2026">
+                                </div>
+                                <span class="field-hint">Leave blank for open public access</span>
+                            </div>
+
+                            <!-- Option 5: Expire Date & Time Column (Optional) -->
+                            <div class="form-field-group">
+                                <label for="gen-expires-at" class="field-label">
+                                    <span>Expire Date & Time</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <div class="input-with-icon">
+                                    <span class="input-icon">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                    </span>
+                                    <input type="datetime-local" id="gen-expires-at" name="expires_at" class="form-input date-input">
+                                </div>
+                                <span class="field-hint">Leave blank for no expiration</span>
+                            </div>
+                        </div>
+
+                        <!-- Option 3: 'Generate link' Button -->
+                        <div class="generate-btn-wrap">
+                            <button type="button" id="btn-generate-share-link" class="btn-primary-generate" data-event-id="{{ event.id }}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                </svg>
+                                <span id="generate-btn-text">Generate Link</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <!-- Quick Action Buttons: Open Portal, WhatsApp, Email -->
-                <div class="share-actions-grid">
-                    <a href="{{ public_event_url }}" target="_blank" rel="noopener" class="share-action-tile tile-portal">
-                        <div class="tile-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                <polyline points="15 3 21 3 21 9"></polyline>
-                                <line x1="10" y1="14" x2="21" y2="3"></line>
-                            </svg>
-                        </div>
-                        <div class="tile-text">
-                            <strong>Open Portal</strong>
-                            <span>Preview Guest UI</span>
-                        </div>
-                    </a>
+                <!-- ================= SECTION 2: ACTIVE GENERATED LINKS LIST ================= -->
+                <div class="active-links-section">
+                    <div class="section-subhead">
+                        <h4>Active Share Links (<span id="active-links-count">{{ share_links|length }}</span>)</h4>
+                        <span class="subhead-tip">Share, view QR code, edit, or delete generated links below.</span>
+                    </div>
 
-                    <a href="https://api.whatsapp.com/send?text=Find%20your%20event%20photos%20with%20a%20quick%20selfie%20at%20{{ public_event_url|urlencode }}" target="_blank" rel="noopener" class="share-action-tile tile-whatsapp">
-                        <div class="tile-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                            </svg>
-                        </div>
-                        <div class="tile-text">
-                            <strong>WhatsApp</strong>
-                            <span>Send to client</span>
-                        </div>
-                    </a>
+                    <div id="share-links-container" class="share-links-list" data-event-id="{{ event.id }}">
+                        {% for link in share_links %}
+                            <div class="share-link-card {% if link.is_all_photos_accessible %}type-album{% else %}type-selfie{% endif %}" id="link-card-{{ link.id }}" data-link-id="{{ link.id }}">
+                                <div class="link-card-header">
+                                    <div class="link-type-badges">
+                                        {% if link.is_all_photos_accessible %}
+                                            <span class="pill-badge pill-album">📂 Full Event Album</span>
+                                        {% else %}
+                                            <span class="pill-badge pill-selfie">✨ AI Face Find Link</span>
+                                        {% endif %}
 
-                    <a href="mailto:?subject=Your%20Event%20Photos%20Portal%20-%20{{ event.name|urlencode }}&body=Hi%2C%0A%0AHere%20is%20your%20guest%20photo%20portal%20where%20you%20can%20find%20your%20photos%20using%20facial%20recognition%3A%0A{{ public_event_url|urlencode }}%0A%0AEnjoy!" class="share-action-tile tile-email">
-                        <div class="tile-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                        </div>
-                        <div class="tile-text">
-                            <strong>Email</strong>
-                            <span>Share link</span>
-                        </div>
-                    </a>
+                                        {% if link.has_password %}
+                                            <span class="pill-badge pill-locked" title="Password protected">🔒 Password</span>
+                                        {% endif %}
+
+                                        {% if link.expires_at_formatted != "Never" %}
+                                            <span class="pill-badge pill-expiry {% if link.is_expired %}is-expired{% endif %}">
+                                                ⏳ {% if link.is_expired %}Expired{% else %}Expires: {{ link.expires_at_formatted }}{% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Option 7: Created Date in Small Size -->
+                                    <div class="link-created-date">
+                                        Created: {{ link.created_at_formatted }}
+                                    </div>
+                                </div>
+
+                                <!-- Link URL Display with Quick Copy -->
+                                <div class="link-url-row">
+                                    <input type="text" class="link-url-input" value="{{ link.url }}" readonly>
+                                    <button type="button" class="btn-copy-card-link" data-url="{{ link.url }}" title="Copy link to clipboard">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                        <span>Copy</span>
+                                    </button>
+                                </div>
+
+                                <!-- Action Buttons & Icons Row -->
+                                <div class="link-actions-row">
+                                    <!-- Option 3 & 4: Contextual Dynamic Share Button -->
+                                    <button
+                                        type="button"
+                                        class="btn-share-channel-main {% if link.is_all_photos_accessible %}btn-share-album{% else %}btn-share-selfie{% endif %}"
+                                        data-url="{{ link.url }}"
+                                        data-name="{{ event.name }}"
+                                        data-type="{% if link.is_all_photos_accessible %}album{% else %}selfie{% endif %}"
+                                    >
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="18" cy="5" r="3"></circle>
+                                            <circle cx="6" cy="12" r="3"></circle>
+                                            <circle cx="18" cy="19" r="3"></circle>
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                        </svg>
+                                        <span class="share-main-text">{{ link.share_btn_text }}</span>
+                                    </button>
+
+                                    <!-- Quick Social Channels -->
+                                    <div class="link-mini-channels">
+                                        <a href="https://api.whatsapp.com/send?text={% if link.is_all_photos_accessible %}View%20all%20photos%20from%20{{ event.name|urlencode }}%20here%3A%20{{ link.url|urlencode }}{% else %}Find%20your%20photos%20from%20{{ event.name|urlencode }}%20with%20a%20quick%20selfie%3A%20{{ link.url|urlencode }}{% endif %}" target="_blank" rel="noopener" class="mini-channel-btn whatsapp" title="Share via WhatsApp">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                            </svg>
+                                        </a>
+
+                                        <a href="mailto:?subject={{ event.name|urlencode }}%20Photos&body={% if link.is_all_photos_accessible %}Here%20is%20the%20link%20to%20view%20all%20event%20photos%3A%0A{{ link.url|urlencode }}{% else %}Here%20is%20your%20AI%20facial%20search%20portal%20to%20find%20your%20photos%3A%0A{{ link.url|urlencode }}{% endif %}" class="mini-channel-btn email" title="Share via Email">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                                <polyline points="22,6 12,13 2,6"></polyline>
+                                            </svg>
+                                        </a>
+                                    </div>
+
+                                    <!-- Option 6: Small Action Icons (QR, Edit, Delete) -->
+                                    <div class="link-manage-icons">
+                                        <!-- QR Code Icon Button -->
+                                        <button
+                                            type="button"
+                                            class="action-icon-btn btn-show-qr"
+                                            data-link-id="{{ link.id }}"
+                                            data-url="{{ link.url }}"
+                                            data-qr="{{ link.qr_code }}"
+                                            data-title="{{ event.name }} ({{ link.share_type_label }})"
+                                            title="View & Download QR Code"
+                                        >
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="3" width="7" height="7"></rect>
+                                                <rect x="14" y="3" width="7" height="7"></rect>
+                                                <rect x="14" y="14" width="7" height="7"></rect>
+                                                <rect x="3" y="14" width="7" height="7"></rect>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Edit Icon Button -->
+                                        <button
+                                            type="button"
+                                            class="action-icon-btn btn-open-edit-link"
+                                            data-link-id="{{ link.id }}"
+                                            data-is-all="{{ link.is_all_photos_accessible|yesno:'true,false' }}"
+                                            data-password="{{ link.password }}"
+                                            data-expires="{{ link.expires_at }}"
+                                            title="Edit Link Settings"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Delete Icon Button -->
+                                        <button
+                                            type="button"
+                                            class="action-icon-btn btn-delete-link"
+                                            data-link-id="{{ link.id }}"
+                                            title="Delete Link"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
 
                 <div class="modal-footer-actions">
-                    <button type="button" class="btn-modal-cancel" data-close-modal="share-event-modal">Close</button>
+                    <button type="button" class="btn-modal-cancel" data-close-modal="share-event-modal">Done</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ================= QR CODE PREVIEW MODAL ================= -->
+    <div class="modal-dialog-backdrop" id="qr-preview-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog-panel modal-panel-sm qr-modal-panel">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <span class="modal-badge-pill"><span>📱</span><span>QR SCAN CODE</span></span>
+                    <h3 id="qr-modal-title">Event QR Code</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-modal="qr-preview-modal" aria-label="Close modal">✕</button>
+            </div>
+            <div class="qr-modal-content">
+                <div class="qr-image-frame">
+                    <img id="qr-modal-img" src="" alt="Event QR Code">
+                </div>
+                <p class="qr-caption" id="qr-modal-caption">Scan with mobile camera to open event portal instantly</p>
+                <div class="qr-actions">
+                    <a id="btn-download-qr" href="#" download="photona_qr_code.png" class="btn-download-qr">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Download QR Code (PNG)</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= EDIT LINK MODAL ================= -->
+    <div class="modal-dialog-backdrop" id="edit-link-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog-panel modal-panel-sm edit-link-panel">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <span class="modal-badge-pill"><span>✏️</span><span>EDIT SHARE LINK</span></span>
+                    <h3>Modify Link Settings</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-modal="edit-link-modal" aria-label="Close modal">✕</button>
+            </div>
+            <form id="edit-link-form" class="edit-link-form">
+                {% csrf_token %}
+                <input type="hidden" id="edit-link-id">
+                
+                <div class="form-checkbox-card" style="margin-bottom: 0.85rem;">
+                    <label class="custom-toggle-label">
+                        <input type="checkbox" id="edit-is-all-photos" class="custom-toggle-input">
+                        <span class="custom-toggle-switch"></span>
+                        <div class="toggle-text-block">
+                            <strong class="toggle-title">Full Album Access</strong>
+                            <span class="toggle-desc">Allow viewing all photos without selfie</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-field-group">
+                    <label for="edit-password" class="field-label">Password Protection</label>
+                    <input type="text" id="edit-password" class="form-input text-input" placeholder="Leave empty for public access">
+                </div>
+
+                <div class="form-field-group" style="margin-top: 0.65rem;">
+                    <label for="edit-expires-at" class="field-label">Expire Date & Time</label>
+                    <input type="datetime-local" id="edit-expires-at" class="form-input date-input">
+                </div>
+
+                <div class="edit-modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem;">
+                    <button type="button" class="btn-modal-cancel" data-close-modal="edit-link-modal">Cancel</button>
+                    <button type="button" id="btn-save-edit-link" class="btn-primary-generate" style="padding: 0.5rem 1.1rem; font-size: 0.82rem;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= EDIT PERSON NAME MODAL ================= -->
+    <div class="modal-dialog-backdrop" id="edit-person-name-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-dialog-panel modal-panel-sm">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <div class="modal-badge-pill">PERSON PROFILE</div>
+                    <h2>Rename Person</h2>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-modal="edit-person-name-modal" aria-label="Close modal">✕</button>
+            </div>
+            <form id="edit-person-name-form" class="modal-form-body">
+                <input type="hidden" id="edit-person-id" value="">
+                <div class="form-group">
+                    <label for="input-person-name" class="form-label">
+                        <span>Person Name</span>
+                        <span class="required-star">*</span>
+                    </label>
+                    <input type="text" id="input-person-name" class="form-input" placeholder="e.g. Groom, Bride, Abdul" required autocomplete="off">
+                </div>
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-modal-cancel" data-close-modal="edit-person-name-modal">Cancel</button>
+                    <button type="submit" class="btn-primary-action btn-modal-submit" id="btn-save-person-name">
+                        <span>Save Name</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script id="existing-event-photos-json" type="application/json">
+    [
+        {% for photo in photos %}
+            {"name": "{{ photo.original_filename|default:photo.image.name|escapejs }}", "size": {{ photo.file_size|default:0 }}}
+            {% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+    </script>
 </body>
 </html>

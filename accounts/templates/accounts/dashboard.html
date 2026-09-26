@@ -52,13 +52,13 @@
                 </a>
 
                 <!-- Requirement 3: Plans & Recharge menu item -->
-                <button type="button" class="nav-link nav-item" id="nav-btn-plans" data-open-modal="plans-modal">
+                <a href="{% url 'plans' %}" class="nav-link nav-item" id="nav-btn-plans">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                         <line x1="1" y1="10" x2="23" y2="10"></line>
                     </svg>
                     <span>Plans & Recharge</span>
-                </button>
+                </a>
 
                 <!-- Requirement 2: Create Event button with clean styling -->
                 <button type="button" class="nav-link nav-item btn-trigger-create-event" data-open-modal="create-event-modal">
@@ -296,13 +296,13 @@
                                     Delight clients with 100% untouched master file downloads and custom-branded guest portals with zero compression or quality loss.
                                 </p>
                                 <div class="banner-actions">
-                                    <button type="button" class="btn-banner-primary btn-banner-purple" data-open-modal="plans-modal">
+                                    <a href="{% url 'plans' %}" class="btn-banner-primary btn-banner-purple">
                                         <span>Explore Studio Plans</span>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                             <line x1="5" y1="12" x2="19" y2="12"></line>
                                             <polyline points="12 5 19 12 12 19"></polyline>
                                         </svg>
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                             <div class="banner-vector-art" aria-hidden="true">

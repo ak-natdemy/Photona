@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from tenants.models import Tenant
 import uuid
 import os
@@ -83,6 +84,67 @@ class Event(models.Model):
         return self.name
 
 
+class EventShareLink(models.Model):
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="share_links"
+    )
+
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
+    is_all_photos_accessible = models.BooleanField(
+        default=False,
+        help_text="If True, guests can directly see and download all photos without selfie search"
+    )
+
+    password = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text="Optional password to protect this link"
+    )
+
+    expires_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Optional expiration date and time"
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def is_expired(self):
+        if self.expires_at:
+            return timezone.now() > self.expires_at
+        return False
+
+    @property
+    def share_type_label(self):
+        return "Full Event Album" if self.is_all_photos_accessible else "AI Face Find Link"
+
+    def __str__(self):
+        return f"{self.event.name} - {self.share_type_label} ({self.token})"
+
+
 class EventPhoto(models.Model):
 
     event = models.ForeignKey(
@@ -103,6 +165,25 @@ class EventPhoto(models.Model):
 
     uploaded_at = models.DateTimeField(
         auto_now_add=True
+    )
+
+    original_filename = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        db_index=True
+    )
+
+    file_size = models.BigIntegerField(
+        default=0,
+        db_index=True
+    )
+
+    file_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        db_index=True
     )
 
     PROCESSING_STATUS = [
@@ -163,7 +244,7 @@ class EventPhoto(models.Model):
             name, _ = os.path.splitext(base_name)
             thumb_name = f"thumb_{name}_{self.id or 'new'}.jpg"
 
-            self.thumbnail.save(thumb_name, ContentFile(thumb_io.getvalue()), save=False)
+            self.thumbnail.save(thumb_name, ContentFile(thumb_io.getvalue()), save=True)
             return True
         except Exception as e:
             import logging
@@ -171,9 +252,16 @@ class EventPhoto(models.Model):
             return False
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
+        generate_thumb = kwargs.pop("generate_thumb", False)
+        if not self.original_filename and self.image:
+            self.original_filename = os.path.basename(self.image.name)
+        if not self.file_size and self.image:
+            try:
+                self.file_size = self.image.size
+            except Exception:
+                pass
         super().save(*args, **kwargs)
-        if (is_new or not self.thumbnail) and self.image:
+        if generate_thumb and not self.thumbnail and self.image:
             try:
                 if self.generate_thumbnail():
                     super().save(update_fields=["thumbnail"])
@@ -182,3 +270,69 @@ class EventPhoto(models.Model):
 
     def __str__(self):
         return f"{self.event.name} - {self.image.name}"
+
+
+class EventPerson(models.Model):
+    """
+    Represents an individual person detected and grouped across event photos
+    via facial recognition clustering.
+    """
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="people"
+    )
+
+    name = models.CharField(
+        max_length=100,
+        default="Person"
+    )
+
+    avatar = models.ImageField(
+        upload_to="events/people/%Y/%m/",
+        null=True,
+        blank=True
+    )
+
+    photos = models.ManyToManyField(
+        EventPhoto,
+        related_name="people",
+        blank=True
+    )
+
+    face_count = models.IntegerField(
+        default=0,
+        help_text="Number of face instances detected for this person"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ["-face_count", "id"]
+
+    @property
+    def avatar_url(self):
+        if self.avatar:
+            try:
+                return self.avatar.url
+            except Exception:
+                pass
+        cover = self.photos.first()
+        if cover:
+            return cover.thumbnail_url
+        return ""
+
+    @property
+    def photo_count(self):
+        return self.photos.count()
+
+    def __str__(self):
+        return f"{self.event.name} - {self.name} ({self.photo_count} photos)"
+

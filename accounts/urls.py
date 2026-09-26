@@ -6,6 +6,7 @@ from .views import (
     register_view,
     logout_view,
     dashboard_stats,
+    plans_and_recharge,
 )
 
 
@@ -39,6 +40,12 @@ urlpatterns = [
         "dashboard/stats/",
         dashboard_stats,
         name="dashboard_stats",
+    ),
+
+    path(
+        "plans/",
+        plans_and_recharge,
+        name="plans",
     ),
 
 ]

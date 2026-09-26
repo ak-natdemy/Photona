@@ -2,8 +2,16 @@ from django import forms
 from .models import Event
 
 
+import os
+
+
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, "getlist"):
+            return files.getlist(name)
+        return files.get(name)
 
 
 class MultipleFileField(forms.FileField):
@@ -26,34 +34,62 @@ class MultipleFileField(forms.FileField):
 class EventPhotoUploadForm(forms.Form):
     images = MultipleFileField(
         label="Select photos",
-        required=True,
+        required=False,
+    )
+    photos = MultipleFileField(
+        label="Select photos",
+        required=False,
     )
 
-    def clean_images(self):
-        uploaded_files = self.cleaned_data["images"]
+    def clean(self):
+        cleaned_data = super().clean()
+        images = cleaned_data.get("images") or []
+        photos = cleaned_data.get("photos") or []
+        all_files = list(images) if images else list(photos)
+
+        # Deduplicate files within the submitted batch
+        unique_files = []
+        seen_keys = set()
+        for f in all_files:
+            key = (getattr(f, "name", "").lower(), getattr(f, "size", 0))
+            if key not in seen_keys:
+                seen_keys.add(key)
+                unique_files.append(f)
+        all_files = unique_files
+
+        if not all_files:
+            raise forms.ValidationError(
+                "Please select at least one photo to upload."
+            )
 
         allowed_types = [
             "image/jpeg",
+            "image/pjpeg",
             "image/png",
             "image/webp",
+            "image/bmp",
         ]
-
         max_file_size = 20 * 1024 * 1024  # 20 MB
 
-        for uploaded_file in uploaded_files:
+        for uploaded_file in all_files:
             if uploaded_file.size > max_file_size:
                 raise forms.ValidationError(
                     f"{uploaded_file.name} is too large. "
                     "Each photo must be 20 MB or smaller."
                 )
 
-            if uploaded_file.content_type not in allowed_types:
+            ext = os.path.splitext(uploaded_file.name)[1].lower()
+            if (
+                uploaded_file.content_type not in allowed_types
+                and ext not in [".jpg", ".jpeg", ".png", ".webp", ".bmp"]
+            ):
                 raise forms.ValidationError(
                     f"{uploaded_file.name} is not a supported image format. "
                     "Please upload JPG, JPEG, PNG, or WebP images."
                 )
 
-        return uploaded_files
+        cleaned_data["cleaned_photos"] = all_files
+        return cleaned_data
 
 
 class EventCreateForm(forms.ModelForm):

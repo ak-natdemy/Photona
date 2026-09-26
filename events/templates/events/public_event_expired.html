@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Link Expired - {{ event.name }} | Photona</title>
+    <link rel="stylesheet" href="{% static 'css/public_event.css' %}?v=4.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="guest-portal-body">
+    <div class="guest-page-wrapper">
+        <header class="guest-header">
+            <div class="guest-nav-inner">
+                <div class="brand-badge">
+                    <div class="brand-logo-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="brand-title-wrap">
+                        <span class="brand-title">PHOTONA</span>
+                        <span class="brand-tagline">Portal Notice</span>
+                    </div>
+                </div>
+
+                <div class="header-event-badge">
+                    <span class="event-name-tag">{{ event.name }}</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="guest-main-container" style="justify-content: center; align-items: center; min-height: 70vh;">
+            <div class="unavailable-card" style="margin: 0 auto; max-width: 440px;">
+                <div class="unavailable-icon-ring" style="width: 58px; height: 58px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h2>This Share Link Has Expired</h2>
+                <p class="unavailable-lead">The access link for <strong>{{ event.name }}</strong> is no longer active.</p>
+                <p class="unavailable-sub">Please reach out to the event photographer or host to request a new link.</p>
+                <button type="button" onclick="window.location.reload()" class="btn-primary-guest" style="margin-top: 0.5rem;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                    </svg>
+                    <span>Check Again</span>
+                </button>
+            </div>
+        </main>
+
+        <footer class="guest-footer">
+            <p>Powered by <strong>PHOTONA</strong> Studio Suite</p>
+        </footer>
+    </div>
+</body>
+</html>

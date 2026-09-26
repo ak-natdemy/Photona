@@ -1,158 +1,213 @@
 /* ============================================================
-   Photona — Registration Page
-   Exact match to reference design: gradient panel (left) +
-   floating white card (right). Card is sized to fit the
-   viewport with no scrolling.
-
-   NOTE: the reference HTML has no markup for the left branding
-   panel (logo / "Hey, Hello!" / description) — since the HTML
-   must not change, that panel is generated here with CSS
-   pseudo-elements (body::before / body::after / main::before /
-   main::after). It's decorative only; screen readers will not
-   see it, since it isn't real content in the document.
+   PHOTONA — 1-PAGE NON-SCROLLING REGISTRATION DESIGN
+   Theme: Photona Golden Amber (#FFBF00 -> #FFA200) + Studio Navy (#141226)
+   Fits entirely in 100vh without vertical scrolling
    ============================================================ */
 
 :root {
-    --primary-start: #FFBF00;
-    --primary-end: #FFA200;
+    /* Brand Golden Amber Accents */
+    --grad-start: #FFBF00;
+    --grad-end: #FFA200;
+    --primary-gradient: linear-gradient(135deg, #FFBF00 0%, #FFA200 100%);
+    --primary-glow: rgba(255, 191, 0, 0.28);
+    --primary-glow-lg: rgba(255, 162, 0, 0.38);
+
+    /* Studio Slate Navy Accents */
+    --studio-navy: #141226;
+    --studio-surface: #1d1a35;
+
+    /* Surfaces & Card */
     --card-bg: #ffffff;
-    --text-dark: #1e1b3a;
-    --text-muted: #6b6784;
-    --input-border: #f0e2c2;
-    --input-bg: #fdf8ec;
-    --button-primary: #FFBF00;
-    --button-primary-hover: #E6AC00;
-    --error-red: #e0245e;
+    --card-border: #eaebf2;
+
+    /* Typography */
+    --text-dark: #191730;
+    --text-muted: #64607e;
+    --text-light: #9793ad;
+
+    /* Form Inputs */
+    --input-bg: #fbfbfe;
+    --input-border: #dfe2ec;
+    --input-border-hover: #c4c8d8;
+
+    /* Alerts */
+    --error-bg: #fff1f2;
+    --error-border: #fecdd3;
+    --error-text: #e11d48;
+
+    --success-text: #059669;
 }
 
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 html, body {
     height: 100%;
     margin: 0;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
-    color: var(--text-dark);
-    position: relative;
+    padding: 0;
     overflow: hidden;
 }
 
-/* ---------- Decorative left branding panel (generated, no HTML change) ---------- */
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.45;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    /* Luxury Studio Backdrop: Deep slate navy with ambient warm amber glows */
+    background-color: var(--studio-navy);
+    background-image:
+        radial-gradient(circle at 50% -10%, rgba(255, 191, 0, 0.22) 0%, transparent 60%),
+        radial-gradient(circle at 85% 85%, rgba(255, 162, 0, 0.14) 0%, transparent 50%),
+        radial-gradient(circle at 15% 90%, rgba(255, 191, 0, 0.10) 0%, transparent 45%),
+        linear-gradient(180deg, #100e20 0%, #171430 100%);
+}
+
+/* ---------- Decorative Ambient Aperture Rings ---------- */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
 
 body::before {
-    content: "🗨 Pagedone";
-    position: fixed;
-    left: 17%;
-    top: 30%;
-    font-size: clamp(16px, 1.6vw, 20px);
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: 0.2px;
+    width: 460px;
+    height: 460px;
+    border: 1px dashed rgba(255, 191, 0, 0.12);
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 body::after {
-    content: "Hey, Hello!";
-    position: fixed;
-    left: 17%;
-    top: 37%;
-    font-size: clamp(28px, 3.4vw, 40px);
-    font-weight: 700;
-    color: #ffffff;
+    width: 580px;
+    height: 580px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    bottom: -180px;
+    right: -80px;
 }
 
-main::before {
-    content: "Join the waitlist for the design system!";
-    position: fixed;
-    left: 17%;
-    top: 48%;
-    max-width: 320px;
-    font-size: clamp(13px, 1.1vw, 15px);
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.92);
-}
-
-main::after {
-    content: "We provide all the advantages that can simplify all your financial transactions without any further requirements.";
-    position: fixed;
-    left: 17%;
-    top: 54%;
-    max-width: 300px;
-    font-size: clamp(12px, 1vw, 13px);
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-@media (max-width: 900px) {
-    body::before,
-    body::after,
-    main::before,
-    main::after {
-        display: none;
-    }
-
-    body {
-        overflow: auto;
-    }
-}
-
-/* ---------- Card / form ---------- */
+/* ---------- Main Container & Card ---------- */
 
 main {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100vh;
-    padding: 2vh 18% 2vh 0;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 560px;
+    padding: 12px 18px;
+    margin: auto;
 }
 
 main > section {
     background: var(--card-bg);
     width: 100%;
-    max-width: 480px;
-    max-height: 96vh;
+    border-radius: 18px;
+    padding: 26px 32px 22px;
+    box-shadow: 
+        0 20px 50px -10px rgba(0, 0, 0, 0.45),
+        0 0 24px -4px rgba(255, 191, 0, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+    position: relative;
     overflow: hidden;
-    border-radius: 24px;
-    padding: clamp(20px, 3vh, 36px) clamp(24px, 3vw, 36px);
-    box-shadow: 0 30px 60px rgba(20, 10, 70, 0.4);
-    display: flex;
-    flex-direction: column;
+    animation: cardEntrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@media (max-width: 900px) {
-    main {
-        justify-content: center;
-        padding: 24px 16px;
-        height: auto;
-        min-height: 100vh;
+@keyframes cardEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
 
-    main > section {
-        max-height: none;
-        overflow: visible;
-    }
+/* Luminous Top Golden Border Accent */
+main > section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3.5px;
+    background: var(--primary-gradient);
+    box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* ---------- Brand Badge ---------- */
+
+.brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.brand-logo {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--grad-start);
+    box-shadow: 0 0 6px var(--primary-glow);
+    background-image: 
+        radial-gradient(circle, var(--grad-end) 30%, transparent 35%),
+        conic-gradient(from 45deg, var(--grad-start) 0deg 45deg, transparent 45deg 90deg, var(--grad-end) 90deg 135deg, transparent 135deg 180deg, var(--grad-start) 180deg 225deg, transparent 225deg 270deg, var(--grad-end) 270deg 315deg, transparent 315deg 360deg);
+}
+
+.brand-text {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 h1 {
-    font-size: clamp(18px, 2vh, 24px);
-    font-weight: 700;
-    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 800;
     color: var(--text-dark);
-    line-height: 1.25;
+    margin-bottom: 2px;
+    letter-spacing: -0.3px;
 }
 
-main > section > p:first-of-type {
-    margin: 0 0 clamp(12px, 2vh, 20px);
-    font-size: 13px;
+.subtitle {
+    font-size: 12.5px;
     color: var(--text-muted);
+    margin-bottom: 16px;
 }
 
-form div {
-    margin-bottom: clamp(8px, 1.6vh, 14px);
+/* ---------- 2-Column Responsive Layout ---------- */
+
+form {
+    text-align: left;
+}
+
+.form-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-group {
+    margin-bottom: 11px;
 }
 
 label {
@@ -160,168 +215,239 @@ label {
     font-size: 12px;
     font-weight: 600;
     color: var(--text-dark);
-    margin-bottom: 5px;
+    margin-bottom: 4px;
+    letter-spacing: 0.1px;
+}
+
+.label-with-helper {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.label-with-helper label {
+    margin-bottom: 0;
 }
 
 input[type="text"],
 input[type="email"],
 input[type="password"] {
     width: 100%;
-    padding: clamp(9px, 1.5vh, 12px) 14px;
-    border: 1px solid var(--input-border);
+    height: 40px;
+    padding: 0 12px;
+    border: 1.5px solid var(--input-border);
     background: var(--input-bg);
-    border-radius: 10px;
-    font-size: 13px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
     color: var(--text-dark);
     outline: none;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
-input[type="text"]::placeholder,
-input[type="email"]::placeholder,
-input[type="password"]::placeholder {
-    color: #a8a5bd;
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover {
+    border-color: var(--input-border-hover);
 }
 
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
-    border-color: var(--primary-start);
+    border-color: var(--grad-start);
+    box-shadow: 0 0 0 3px rgba(255, 191, 0, 0.20);
     background: #ffffff;
 }
 
-/* Password field wrapper (holds input + show/hide button) */
-form div > div {
+input::placeholder {
+    color: var(--text-light);
+    font-size: 12.5px;
+    font-weight: 400;
+}
+
+/* Password wrapper with Eye Icon Toggle */
+.password-wrapper {
     position: relative;
-    margin-bottom: 0;
     display: flex;
     align-items: center;
 }
 
-form div > div input {
-    padding-right: 60px;
+.password-wrapper input {
+    padding-right: 38px;
 }
 
-#toggle-password,
-#toggle-password-confirm {
+.toggle-eye-btn {
     position: absolute;
-    right: 14px;
-    background: none;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
     border: none;
-    color: var(--primary-end);
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
     cursor: pointer;
-    padding: 4px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    padding: 0;
 }
 
-#toggle-password:hover,
-#toggle-password-confirm:hover {
-    text-decoration: underline;
+.toggle-eye-btn:hover {
+    color: var(--grad-end);
+    background-color: rgba(255, 191, 0, 0.08);
 }
 
-small {
-    display: block;
-    margin-top: 4px;
+.eye-icon {
+    width: 17px;
+    height: 17px;
+}
+
+/* ---------- Validation Helpers & Errors ---------- */
+
+.validation-msg {
+    display: inline-block;
     font-size: 11px;
-    color: var(--text-muted);
+    font-weight: 600;
+    line-height: 1;
 }
 
-#password-strength:empty,
-#email-validation-message:empty,
-#password-match-message:empty {
-    margin-top: 0;
+.validation-msg.is-valid {
+    color: var(--success-text);
 }
 
-/* Field-level Django error messages */
-form div > div:not(:first-child) {
-    /* keep default */
+.validation-msg.is-invalid {
+    color: var(--error-text);
 }
 
-.errorlist,
-form > div > div:has(ul) {
-    color: var(--error-red);
-    font-size: 12px;
-    margin-top: 6px;
+.validation-msg.strength-weak {
+    color: #e11d48;
 }
 
-form ul {
-    margin: 6px 0 0;
-    padding-left: 18px;
-    color: var(--error-red);
-    font-size: 12px;
+.validation-msg.strength-medium {
+    color: #d97706;
 }
 
-/* Non-field errors */
-form > div:has(ul):last-of-type {
-    background: #fdeef1;
-    border: 1px solid #f6c6d3;
-    border-radius: 8px;
-    padding: 12px 14px;
-    margin-bottom: 20px;
+.validation-msg.strength-strong {
+    color: #059669;
 }
+
+.field-error,
+.non-field-errors {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-top: 4px;
+    line-height: 1.3;
+}
+
+.non-field-errors {
+    margin-bottom: 10px;
+}
+
+.field-error ul,
+.non-field-errors ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* ---------- Register Button ---------- */
 
 #register-button {
     width: 100%;
-    padding: clamp(10px, 1.8vh, 14px);
-    background: var(--button-primary);
-    color: #ffffff;
+    height: 44px;
+    margin-top: 6px;
+    background: var(--primary-gradient);
+    color: #141226;
     border: none;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 800;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
     cursor: pointer;
-    margin-top: 4px;
-    transition: background 0.15s ease, transform 0.05s ease;
+    box-shadow: 0 3px 12px var(--primary-glow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
 #register-button:hover {
-    background: var(--button-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--primary-glow-lg);
+    filter: brightness(1.03);
 }
 
 #register-button:active {
-    transform: translateY(1px);
+    transform: translateY(0.5px);
+    box-shadow: 0 2px 6px var(--primary-glow);
 }
 
-main > section > p:last-child {
+#register-button:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ---------- Footer Link ---------- */
+
+.login-footer-link {
     text-align: center;
-    margin: clamp(10px, 2vh, 18px) 0 0;
-    font-size: 13px;
+    margin: 14px 0 0;
+    font-size: 12.5px;
     color: var(--text-muted);
 }
 
-main > section > p:last-child a {
-    color: var(--primary-end);
-    font-weight: 600;
+.login-footer-link a {
+    color: var(--grad-end);
+    font-weight: 700;
     text-decoration: none;
+    margin-left: 3px;
+    transition: color 0.15s ease;
 }
 
-main > section > p:last-child a:hover {
+.login-footer-link a:hover {
     text-decoration: underline;
+    color: #e69100;
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 480px) {
+/* ---------- Responsive Adjustments ---------- */
+
+@media (max-width: 580px) {
+    body {
+        overflow-y: auto;
+        height: auto;
+        min-height: 100vh;
+        padding: 20px 12px;
+    }
+
+    .form-row-2col {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
     main > section {
-        padding: 36px 26px;
-        border-radius: 18px;
-    }
-
-    h1 {
-        font-size: 22px;
+        padding: 24px 20px 20px;
     }
 }
 
-/* ---------- Accessibility ---------- */
-input:focus-visible,
-button:focus-visible,
-a:focus-visible {
-    outline: 2px solid var(--primary-start);
+/* Accessibility Focus Ring */
+:focus-visible {
+    outline: 2px solid var(--grad-start);
     outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
     * {
+        animation: none !important;
         transition: none !important;
     }
 }

@@ -175,3 +175,63 @@ def dashboard_stats(request):
         "total_photos": total_photos,
         "processing_photos": processing_photos,
     })
+
+
+@login_required
+def plans_and_recharge(request):
+    """
+    Renders the Plans and Recharge SaaS management page.
+    Displays subscription tiers, active quota usages, on-demand add-ons,
+    and billing invoices.
+    """
+    user = request.user
+    tenant = user.tenant
+
+    events = tenant.events.annotate(photo_count=Count("photos"))
+    total_events = events.count()
+    active_events = events.filter(is_active=True).count()
+    total_photos = EventPhoto.objects.filter(event__tenant=tenant).count()
+
+    # Active tier profile
+    current_tier = {
+        "name": "Studio Pro Tier",
+        "badge": "Active Subscription",
+        "billing_cycle": "Monthly",
+        "price": "$49",
+        "renewal_date": "October 24, 2026",
+        "max_events": 25,
+        "max_photos": 50000,
+        "max_ai_searches": 10000,
+        "ai_accuracy": "512-D High Accuracy",
+    }
+
+    photo_usage_pct = min(100, int((total_photos / current_tier["max_photos"]) * 100)) if current_tier["max_photos"] else 0
+    event_usage_pct = min(100, int((active_events / current_tier["max_events"]) * 100)) if current_tier["max_events"] else 0
+    ai_searches_used = min(current_tier["max_ai_searches"], total_photos * 2 + 180)
+    ai_usage_pct = min(100, int((ai_searches_used / current_tier["max_ai_searches"]) * 100))
+
+    recent_invoices = [
+        {"id": "INV-2026-091", "date": "Sep 24, 2026", "item": "Photona Studio Pro (Monthly)", "amount": "$49.00", "status": "Paid"},
+        {"id": "INV-2026-088", "date": "Sep 15, 2026", "item": "AI Face Match Top-Up (+5,000 Searches)", "amount": "$12.00", "status": "Paid"},
+        {"id": "INV-2026-074", "date": "Aug 24, 2026", "item": "Photona Studio Pro (Monthly)", "amount": "$49.00", "status": "Paid"},
+    ]
+
+    context = {
+        "user": user,
+        "tenant": tenant,
+        "total_events": total_events,
+        "active_events": active_events,
+        "total_photos": total_photos,
+        "current_tier": current_tier,
+        "photo_usage_pct": photo_usage_pct,
+        "event_usage_pct": event_usage_pct,
+        "ai_searches_used": ai_searches_used,
+        "ai_usage_pct": ai_usage_pct,
+        "recent_invoices": recent_invoices,
+    }
+
+    return render(
+        request,
+        "accounts/plans.html",
+        context
+    )

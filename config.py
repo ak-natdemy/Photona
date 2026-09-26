@@ -40,6 +40,9 @@ MODEL_NAME = "buffalo_l"
 
 DETECTION_SIZE = (640, 640)
 
+# Maximum in-memory dimension for AI detection (reduces RAM usage by ~80%)
+MAX_DETECTION_DIM = 1600
+
 
 # =====================================================
 # Search Settings

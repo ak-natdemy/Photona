@@ -45,7 +45,9 @@ def get_image_files(
 
 def process_event(
     image_records,
-    app
+    app,
+    on_photo_started=None,
+    on_photo_processed=None,
 ):
     """
     Process all supplied event images.
@@ -81,11 +83,23 @@ def process_event(
 
         image_path = record["image_path"]
 
+        if on_photo_started:
+            try:
+                on_photo_started(image_id)
+            except Exception:
+                pass
+
         image_record, face_record_list = process_image(
             image_path=image_path,
             app=app,
             image_id=image_id
         )
+
+        if on_photo_processed:
+            try:
+                on_photo_processed(image_id)
+            except Exception:
+                pass
 
         if image_record is None:
             continue

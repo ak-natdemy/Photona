@@ -34,12 +34,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // Toggle selfie card buttons
     const btnSearchAgain = document.getElementById("btn-search-again");
     const btnTryAgain = document.getElementById("btn-try-again");
+    const btnCloseSelfieCard = document.getElementById("btn-close-selfie-card");
     const selfieCardSection = document.getElementById("selfie-card-section");
 
     // Batch download elements
     const selectAllCheckbox = document.getElementById("select-all-checkbox");
     const photoCheckboxes = document.querySelectorAll(".photo-item-checkbox");
     const selectedCounter = document.getElementById("selected-counter");
+    const selectionCounterBadge = document.getElementById("selection-counter-badge");
+    const btnClearSelection = document.getElementById("btn-clear-selection");
     const downloadZipBtn = document.getElementById("download-zip-btn");
     const zipBtnText = document.getElementById("zip-btn-text");
     const zipBtnCount = document.getElementById("zip-btn-count");
@@ -326,6 +329,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    if (btnCloseSelfieCard && selfieCardSection) {
+        btnCloseSelfieCard.addEventListener("click", () => {
+            selfieCardSection.style.display = "none";
+            stopCameraStream();
+            const resultsSection = document.getElementById("results-section");
+            if (resultsSection) {
+                resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
+    }
+
     // Stop camera when leaving the page to release hardware
     window.addEventListener("beforeunload", () => {
         stopCameraStream();
@@ -343,6 +357,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (zipBtnCount) {
             zipBtnCount.textContent = count;
+        }
+
+        if (selectionCounterBadge) {
+            if (count > 0) {
+                selectionCounterBadge.classList.add("has-selected");
+            } else {
+                selectionCounterBadge.classList.remove("has-selected");
+            }
+        }
+
+        if (btnClearSelection) {
+            btnClearSelection.style.display = count > 0 ? "inline-flex" : "none";
         }
 
         if (downloadZipBtn) {
@@ -386,6 +412,19 @@ document.addEventListener("DOMContentLoaded", () => {
             photoCheckboxes.forEach((chk) => {
                 chk.checked = isChecked;
             });
+            updateSelectionCount();
+        });
+    }
+
+    if (btnClearSelection) {
+        btnClearSelection.addEventListener("click", () => {
+            photoCheckboxes.forEach((chk) => {
+                chk.checked = false;
+            });
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
             updateSelectionCount();
         });
     }
