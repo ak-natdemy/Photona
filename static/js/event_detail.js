@@ -1677,15 +1677,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // 2. Update individual photo cards & sequential reveal
+            // 2. Update individual photo cards (live status indicator without blurring/masking)
             if (data.photos && Array.isArray(data.photos)) {
                 data.photos.forEach((item) => {
                     const card = document.getElementById(`photo-card-${item.id}`);
-                    const overlay = document.getElementById(`photo-processing-overlay-${item.id}`);
-                    const img = document.getElementById(`photo-img-${item.id}`);
                     const statusCircle = document.getElementById(`photo-status-${item.id}`);
-                    const badge = document.getElementById(`proc-badge-${item.id}`);
-                    const spinnerWrap = document.getElementById(`proc-spinner-wrap-${item.id}`);
                     const pStatus = (item.processing_status || "pending").toLowerCase();
 
                     // Update bottom-right status symbol in card footer
@@ -1693,68 +1689,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         statusCircle.className = `ai-status-circle status-${pStatus}`;
                         statusCircle.innerHTML = getStatusIconSVG(pStatus);
                         statusCircle.dataset.status = pStatus;
+                        const label = (pStatus === "completed" || pStatus === "ready") ? "Ready" : (pStatus.charAt(0).toUpperCase() + pStatus.slice(1));
+                        statusCircle.title = `AI Status: ${label}`;
                     }
 
                     if (card) {
-                        const prevStatus = (card.dataset.status || "").toLowerCase();
                         card.dataset.status = pStatus;
-
-                        if (pStatus === "completed" || pStatus === "ready") {
-                            // Check if this photo was masked / processing
-                            const wasProcessing = card.classList.contains("is-processing") || 
-                                                  (prevStatus && prevStatus !== "completed" && prevStatus !== "ready");
-                            
-                            card.classList.remove("is-processing", "status-pending", "status-processing");
-
-                            if (overlay) {
-                                overlay.classList.add("is-hidden");
-                            }
-                            if (img) {
-                                img.classList.remove("img-masked");
-                            }
-
-                            if (wasProcessing) {
-                                // REVEAL ANIMATION: Smoothly pop & celebrate newly ready photo!
-                                card.classList.remove("just-revealed");
-                                void card.offsetWidth; // Trigger reflow for animation restart
-                                card.classList.add("just-revealed");
-                                setTimeout(() => {
-                                    card.classList.remove("just-revealed");
-                                }, 2200);
-                            }
-                        } else if (pStatus === "processing") {
-                            card.classList.add("is-processing", "status-processing");
-                            card.classList.remove("status-pending");
-
-                            if (overlay) overlay.classList.remove("is-hidden");
-                            if (img) img.classList.add("img-masked");
-                            if (badge) badge.textContent = "Indexing Faces...";
-                            if (spinnerWrap) {
-                                spinnerWrap.innerHTML = '<div class="proc-ring-spinner"></div>';
-                            }
-                        } else if (pStatus === "pending") {
-                            card.classList.add("is-processing", "status-pending");
-                            card.classList.remove("status-processing");
-
-                            if (overlay) overlay.classList.remove("is-hidden");
-                            if (img) img.classList.add("img-masked");
-                            if (badge) badge.textContent = "In Queue";
-                            if (spinnerWrap) {
-                                spinnerWrap.innerHTML = '<div class="proc-pulse-dots"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></div>';
-                            }
-                        } else if (pStatus === "failed") {
-                            card.classList.add("is-processing", "status-failed");
-                            if (overlay) overlay.classList.remove("is-hidden");
-                            if (badge) badge.textContent = "Index Failed";
-                        }
                     }
                 });
             }
 
             // ============================================================
-            // LIVE STREAMING OF READY PHOTOS (Direct DOM Prepend without Reload)
+            // LIVE STREAMING OF ALL UPLOADED PHOTOS (All displayed immediately)
             // ============================================================
-            if (data.ready_photos && Array.isArray(data.ready_photos)) {
+            const streamList = data.all_photos || data.ready_photos;
+            if (streamList && Array.isArray(streamList)) {
                 const grid = document.getElementById("photo-cards-grid");
                 const procEmptyState = document.getElementById("processing-empty-state");
                 const noPhotosEmptyState = document.getElementById("no-photos-empty-state");
@@ -1762,10 +1711,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 let newlyAddedCount = 0;
 
-                // data.ready_photos is sorted newest-first.
+                // streamList is sorted newest-first.
                 // Iterate in reverse (oldest -> newest) and prepend so newest stays at top.
-                for (let i = data.ready_photos.length - 1; i >= 0; i--) {
-                    const p = data.ready_photos[i];
+                for (let i = streamList.length - 1; i >= 0; i--) {
+                    const p = streamList[i];
                     const existingCard = document.getElementById(`photo-card-${p.id}`);
                     if (!existingCard && grid) {
                         // Unhide grid and toolbar; hide empty states
@@ -1774,11 +1723,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (galleryBulkToolbar) galleryBulkToolbar.style.display = "flex";
                         grid.style.display = "grid";
 
+                        const pStatus = (p.processing_status || "pending").toLowerCase();
                         const card = document.createElement("div");
-                        card.className = "little-photo-card just-revealed";
+                        card.className = "little-photo-card";
                         card.id = `photo-card-${p.id}`;
                         card.dataset.id = p.id;
-                        card.dataset.status = "completed";
+                        card.dataset.status = pStatus;
+
+                        const statusSvg = getStatusIconSVG(pStatus);
+                        const statusTitle = (pStatus === "completed" || pStatus === "ready") ? "Ready" : (pStatus.charAt(0).toUpperCase() + pStatus.slice(1));
 
                         card.innerHTML = `
                             <div class="card-select-overlay-right">
@@ -1791,7 +1744,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
 
                             <div class="photo-thumb-container" data-full-img="${p.image_url}" data-photo-id="${p.id}" data-photo-number="${p.id}">
-                                <img src="${p.thumbnail_url}" alt="${p.filename || 'Photo'}" loading="lazy" class="card-photo-img" id="photo-img-${p.id}">
+                                <img src="${p.thumbnail_url || p.image_url}" alt="${p.filename || 'Photo'}" loading="lazy" class="card-photo-img" id="photo-img-${p.id}">
 
                                 <div class="card-hover-actions">
                                     <a href="${p.image_url}" download class="hover-action-btn hover-btn-download" title="Download photo">
@@ -1818,26 +1771,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
 
                                 <div class="photo-info-right">
-                                    <span class="ai-status-circle status-completed"
+                                    <span class="ai-status-circle status-${pStatus}"
                                           id="photo-status-${p.id}"
-                                          title="AI Status: Ready"
-                                          data-status="completed">
-                                        <svg class="status-svg" viewBox="0 0 24 24" fill="none">
-                                            <circle cx="12" cy="12" r="8.5" stroke="#10b981" stroke-width="2" fill="rgba(16, 185, 129, 0.12)" />
-                                            <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
+                                          title="AI Status: ${statusTitle}"
+                                          data-status="${pStatus}">
+                                        ${statusSvg}
                                     </span>
                                 </div>
                             </div>
                         `;
 
-                        // Prepend live ready photo onto top of grid
+                        // Prepend live photo onto top of grid immediately
                         grid.prepend(card);
                         newlyAddedCount++;
-
-                        setTimeout(() => {
-                            card.classList.remove("just-revealed");
-                        }, 2200);
                     }
                 }
 
@@ -1969,9 +1915,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (liveBarFill) liveBarFill.style.width = `${pct}%`;
 
                     if (liveTitle) {
-                        if (liveTitle.dataset.currentTitle !== "uploading") {
-                            liveTitle.innerHTML = `Your images are uploading<span class="processing-dots"><span>.</span><span>.</span><span>.</span></span>`;
-                            liveTitle.dataset.currentTitle = "uploading";
+                        if (liveTitle.dataset.currentTitle !== "processing") {
+                            liveTitle.innerHTML = `AI Facial Indexing in progress<span class="processing-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                            liveTitle.dataset.currentTitle = "processing";
                         }
                     }
                     if (liveSubtitle) {

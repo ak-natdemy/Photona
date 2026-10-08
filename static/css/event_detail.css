@@ -6767,24 +6767,16 @@ body {
     background: rgba(15, 23, 42, 0.85);
 }
 
+/* All photos remain fully interactive and crisp while processing */
 .little-photo-card.is-processing .card-select-overlay-right,
 .little-photo-card.is-processing .card-hover-actions {
-    opacity: 0 !important;
-    pointer-events: none !important;
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.little-photo-card.is-processing .photo-thumb-container {
-    cursor: wait;
-}
-
-/* Photo masked (blurred + dimmed) while processing */
-/* Photo displayed in blur style while processing; smoothly unblurs once completed */
 .card-photo-img.img-masked {
-    filter: blur(8px) brightness(0.96) !important;
-    transform: scale(1.05) !important;
-    user-select: none !important;
-    pointer-events: none !important;
-    transition: filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    filter: blur(0px) brightness(1) !important;
+    transform: scale(1) !important;
 }
 
 .card-photo-img {

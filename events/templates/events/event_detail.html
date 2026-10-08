@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ event.name }} | Photona Studio Suite</title>
-    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v=21.0">
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v=22.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -574,10 +574,9 @@
                         </div>
                     </div>
 
-                    <!-- Little Photo Cards Grid -->
+                    <!-- Little Photo Cards Grid (All uploaded photos displayed immediately) -->
                     <div class="photo-cards-grid" id="photo-cards-grid" {% if not photos %}style="display: none;"{% endif %}>
                         {% for photo in photos %}
-                            {% if photo.processing_status == "completed" or photo.processing_status == "ready" %}
                             <div class="little-photo-card" id="photo-card-{{ photo.id }}" data-id="{{ photo.id }}" data-status="{{ photo.processing_status }}">
                                 <div class="card-select-overlay-right">
                                     <input type="checkbox" class="photo-checkbox sr-checkbox" value="{{ photo.id }}" id="chk-{{ photo.id }}" aria-label="Select photo #{{ forloop.revcounter }}">
@@ -618,19 +617,36 @@
                                     </div>
 
                                     <div class="photo-info-right">
-                                        <span class="ai-status-circle status-completed"
+                                        <span class="ai-status-circle status-{{ photo.processing_status }}"
                                               id="photo-status-{{ photo.id }}"
-                                              title="AI Status: Ready"
-                                              data-status="completed">
-                                            <svg class="status-svg" viewBox="0 0 24 24" fill="none">
-                                                <circle cx="12" cy="12" r="8.5" stroke="#10b981" stroke-width="2" fill="rgba(16, 185, 129, 0.12)" />
-                                                <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-                                            </svg>
+                                              title="AI Status: {{ photo.get_processing_status_display }}"
+                                              data-status="{{ photo.processing_status }}">
+                                            {% if photo.processing_status == "completed" or photo.processing_status == "ready" %}
+                                                <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="8.5" stroke="#10b981" stroke-width="2" fill="rgba(16, 185, 129, 0.12)" />
+                                                    <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            {% elif photo.processing_status == "processing" %}
+                                                <svg class="status-svg circle-buffer-svg" viewBox="0 0 24 24" fill="none">
+                                                    <circle class="buffer-track" cx="12" cy="12" r="8.5" stroke="rgba(255, 162, 0, 0.25)" stroke-width="2.5" />
+                                                    <circle class="buffer-fill" cx="12" cy="12" r="8.5" stroke="#FFA200" stroke-width="2.5" stroke-linecap="round" />
+                                                </svg>
+                                            {% elif photo.processing_status == "failed" %}
+                                                <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="8.5" stroke="#ef4444" stroke-width="2" fill="rgba(239, 68, 68, 0.12)" />
+                                                    <line x1="8.5" y1="8.5" x2="15.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
+                                                    <line x1="15.5" y1="8.5" x2="8.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
+                                                </svg>
+                                            {% else %}
+                                                <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="8.5" stroke="#94a3b8" stroke-width="2" fill="rgba(148, 163, 184, 0.12)" />
+                                                    <circle cx="12" cy="12" r="2.5" fill="#64748b" />
+                                                </svg>
+                                            {% endif %}
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                            {% endif %}
                         {% endfor %}
                     </div>
 
@@ -1011,7 +1027,7 @@
     </div>
 
     <!-- Real-time Polling & Interactive Controls -->
-    <script src="{% static 'js/event_detail.js' %}?v=21.0"></script>
+    <script src="{% static 'js/event_detail.js' %}?v=22.0"></script>
 
         <!-- ================= SHARE EVENT & ACCESS LINKS HUB ================= -->
     <div class="modal-dialog-backdrop" id="share-event-modal" aria-hidden="true" role="dialog" aria-modal="true">

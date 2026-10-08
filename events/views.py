@@ -79,10 +79,8 @@ def event_detail(request, event_id):
         tenant=request.user.tenant
     )
 
-    # Descending order: latest uploaded / processed photo FIRST at top!
-    photos = event.photos.filter(
-        processing_status__in=["completed", "ready"]
-    ).order_by("-uploaded_at", "-id")
+    # Descending order: ALL photos displayed immediately upon upload (latest first)
+    photos = event.photos.all().order_by("-uploaded_at", "-id")
 
     share_links = event.share_links.filter(is_active=True).order_by("-created_at")
     if not share_links.exists():
@@ -131,11 +129,11 @@ def event_detail(request, event_id):
         except Exception as e:
             logger.warning("Initial face clustering dispatch failed on event_detail: %s", e)
 
-    all_event_photos = event.photos.all()
+    all_event_photos = photos
     total_photos_count = all_event_photos.count()
     processing_photos_count = all_event_photos.filter(processing_status="processing").count()
     pending_photos_count = all_event_photos.filter(processing_status="pending").count()
-    completed_photos_count = photos.count()
+    completed_photos_count = all_event_photos.filter(processing_status__in=["completed", "ready"]).count()
     has_processing_photos = (processing_photos_count + pending_photos_count) > 0
 
     return render(
@@ -949,6 +947,7 @@ def event_ai_status(request, event_id):
 
     photo_statuses = []
     ready_photos_data = []
+    all_photos_data = []
     completed_count = 0
     processing_count = 0
     pending_count = 0
@@ -956,15 +955,24 @@ def event_ai_status(request, event_id):
 
     for photo in all_photos:
         st = (photo.processing_status or "pending").lower()
+        thumb = photo.thumbnail_url or (photo.image.url if photo.image else "")
+        img_url = photo.image.url if photo.image else ""
+        fname = os.path.basename(photo.image.name) if photo.image else ""
+        upl_at = photo.uploaded_at.strftime("%b %d, %Y · %I:%M %p") if photo.uploaded_at else ""
+
+        p_info = {
+            "id": photo.id,
+            "thumbnail_url": thumb,
+            "image_url": img_url,
+            "filename": fname,
+            "uploaded_at": upl_at,
+            "processing_status": st,
+        }
+        all_photos_data.append(p_info)
+
         if st in ("completed", "ready"):
             completed_count += 1
-            ready_photos_data.append({
-                "id": photo.id,
-                "thumbnail_url": photo.thumbnail_url or (photo.image.url if photo.image else ""),
-                "image_url": photo.image.url if photo.image else "",
-                "filename": os.path.basename(photo.image.name) if photo.image else "",
-                "uploaded_at": photo.uploaded_at.strftime("%b %d, %Y · %I:%M %p") if photo.uploaded_at else "",
-            })
+            ready_photos_data.append(p_info)
         elif st == "processing":
             processing_count += 1
         elif st == "failed":
@@ -994,6 +1002,7 @@ def event_ai_status(request, event_id):
         "ai_status": event.ai_status,
         "photos": photo_statuses,
         "ready_photos": ready_photos_data,
+        "all_photos": all_photos_data,
         "people": people_data,
         "total_count": total_count,
         "completed_count": completed_count,
