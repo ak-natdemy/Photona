@@ -89,3 +89,35 @@ def get_event_database_dir(event_id: int) -> Path:
     )
 
     return event_database_dir
+
+# =====================================================
+# Parallel Processing Settings
+# =====================================================
+
+AI_BATCH_SIZE = 15
+
+USE_PARALLEL_ORCHESTRATOR = True
+
+
+def get_event_batches_dir(event_id: int) -> Path:
+    """
+    Return the temporary directory for parallel batch results.
+    """
+    batches_dir = get_event_database_dir(event_id) / "batches"
+    batches_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+    return batches_dir
+
+# =====================================================
+# Phase 2: Chunked Upload Settings
+# =====================================================
+
+USE_CHUNKED_UPLOAD = True
+
+UPLOAD_CHUNK_SIZE = 50
+
+UPLOAD_CONCURRENCY = 3
+
+MAX_UPLOAD_RETRIES = 3

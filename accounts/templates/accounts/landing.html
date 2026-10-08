@@ -1,0 +1,903 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photona Luxe Studio | AI Instant Photo Delivery for All Events & Celebrations</title>
+    <meta name="description" content="Photona is the premier event gallery platform for all celebrations, corporate summits, festivals, galas, and weddings. Deliver thousands of high-res memories to attendees instantly using seamless face discovery.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/landing.css' %}?v=3.0">
+</head>
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar" id="main-nav">
+        <div class="container navbar-inner">
+            <!-- Brand Logo -->
+            <a href="#banners" class="brand-logo" aria-label="Photona Home">
+                <div class="brand-icon-box">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M3 9a2 2 0 0 1 2-2h1.5a1 1 0 0 0 .8-.4l1.4-1.8A2 2 0 0 1 10.3 4h3.4a2 2 0 0 1 1.6.8l1.4 1.8a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    </svg>
+                </div>
+                <div class="brand-text-col">
+                    <span class="brand-name">PHOTONA</span>
+                    <span class="brand-tagline">EVENTS & CELEBRATIONS</span>
+                </div>
+            </a>
+
+            <!-- Nav Links -->
+            <ul class="nav-links">
+                <li><a href="#banners" class="nav-link">Home</a></li>
+                <li><a href="#event-types" class="nav-link">Event Types</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+                <li><a href="#plans" class="nav-link">Plans & Pricing</a></li>
+                <li><a href="#login" class="nav-link">Studio Login</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+
+            <!-- Nav Actions -->
+            <div class="nav-actions">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn-nav-primary">
+                        <span>Studio Dashboard</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                {% else %}
+                    <a href="#login" class="btn-nav-ghost">Sign In</a>
+                    <a href="{% url 'register' %}" class="btn-nav-primary">
+                        <span>Get Started Free</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile Hamburger -->
+            <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+            </button>
+        </div>
+
+        <!-- Mobile Drawer (Clean, minimal, hidden on desktop) -->
+        <div class="mobile-drawer" id="mobile-drawer">
+            <a href="#banners" class="mobile-nav-link">Home</a>
+            <a href="#event-types" class="mobile-nav-link">Event Types</a>
+            <a href="#about" class="mobile-nav-link">About</a>
+            <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+            <a href="#plans" class="mobile-nav-link">Plans & Pricing</a>
+            <a href="#login" class="mobile-nav-link">Studio Login</a>
+            <a href="#contact" class="mobile-nav-link">Contact</a>
+            <div class="mobile-drawer-actions">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn-nav-primary mobile-btn">Studio Dashboard</a>
+                {% else %}
+                    <a href="#login" class="btn-nav-ghost mobile-btn">Sign In</a>
+                    <a href="{% url 'register' %}" class="btn-nav-primary mobile-btn">Get Started Free</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= HERO SLIDING BANNERS (1 - 3: ALL EVENTS) ================= -->
+    <header class="hero-slider-section" id="banners">
+        <div class="slider-container">
+
+            <!-- SLIDE 1: Mega Summits, Festivals & Live Concerts -->
+            <div class="slide active">
+                <div class="slide-bg-wrap">
+                    <img src="{% static 'images/banner_festival.jpg' %}" alt="Live Festival, Corporate Summit and Concert Celebration" class="slide-img">
+                    <div class="slide-overlay"></div>
+                    <div class="slide-ambient-glow"></div>
+                </div>
+                <div class="slide-content-wrap">
+                    <div class="slide-content">
+                        <div class="section-pill">✦ ALL EVENTS & LIVE CELEBRATIONS</div>
+                        <h1 class="slide-title">
+                            Instant Face Delivery For <span class="gradient-text">Every Event & Gathering</span>
+                        </h1>
+                        <p class="slide-desc">
+                            From 10,000-attendee corporate summits, tech expos, and music festivals to gala banquets and private parties — Photona lets every attendee find their high-res photos in seconds.
+                        </p>
+                        <div class="slide-actions">
+                            <a href="#plans" class="btn-hero-primary">
+                                <span>Explore Studio Plans</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </a>
+                            <a href="#how-it-works" class="btn-hero-secondary">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                                <span>How It Works</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 2: Corporate Galas, Banquets & Award Nights -->
+            <div class="slide">
+                <div class="slide-bg-wrap">
+                    <img src="{% static 'images/banner2.jpg' %}" alt="Luxury Gala, Awards Ceremony and Banquet Celebration" class="slide-img">
+                    <div class="slide-overlay"></div>
+                    <div class="slide-ambient-glow"></div>
+                </div>
+                <div class="slide-content-wrap">
+                    <div class="slide-content">
+                        <div class="section-pill">✦ ZERO-FRICTION GUEST EXPERIENCE</div>
+                        <h2 class="slide-title">
+                            Attendees Take a Selfie. Their <span class="gradient-text">Photos Appear Instantly.</span>
+                        </h2>
+                        <p class="slide-desc">
+                            No more scrolling through 5,000 event photos. Attendees scan a table QR code or event badge, snap a quick selfie, and immediately download their curated photos in full resolution.
+                        </p>
+                        <div class="slide-actions">
+                            <a href="{% url 'register' %}" class="btn-hero-primary">
+                                <span>Start 14-Day Free Trial</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </a>
+                            <a href="#login" class="btn-hero-secondary">
+                                <span>Studio Login</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 3: Weddings, Milestones & Private Celebrations -->
+            <div class="slide">
+                <div class="slide-bg-wrap">
+                    <img src="{% static 'images/banner1.jpg' %}" alt="Weddings, Milestones and Private Parties" class="slide-img">
+                    <div class="slide-overlay"></div>
+                    <div class="slide-ambient-glow"></div>
+                </div>
+                <div class="slide-content-wrap">
+                    <div class="slide-content">
+                        <div class="section-pill">✦ BESPOKE BRANDED CLIENT VAULTS</div>
+                        <h2 class="slide-title">
+                            Emotional Celebrations & Milestones, <span class="gradient-text">Delivered Live.</span>
+                        </h2>
+                        <p class="slide-desc">
+                            Delight couples, families, VIPs, and attendees with live branded galleries that turn unforgettable celebrations into lasting memories and viral social sharing before the evening ends.
+                        </p>
+                        <div class="slide-actions">
+                            <a href="#plans" class="btn-hero-primary">
+                                <span>View Subscription Tiers</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </a>
+                            <a href="#contact" class="btn-hero-secondary">
+                                <span>Contact Concierge</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Slider Arrow Controls -->
+        <button type="button" class="slider-nav-btn slider-prev" id="slider-prev-btn" aria-label="Previous slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button type="button" class="slider-nav-btn slider-next" id="slider-next-btn" aria-label="Next slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
+        <!-- Slider Progress Indicators -->
+        <div class="slider-indicators">
+            <div class="indicator-dot active" data-slide="0" aria-label="Slide 1"></div>
+            <div class="indicator-dot" data-slide="1" aria-label="Slide 2"></div>
+            <div class="indicator-dot" data-slide="2" aria-label="Slide 3"></div>
+        </div>
+    </header>
+
+
+    <!-- ================= EVENT VERSATILITY STRIP ================= -->
+    <section class="event-types-strip" id="event-types">
+        <div class="container">
+            <div class="event-types-flex">
+                <div class="event-type-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Conferences & Tech Summits</span>
+                </div>
+                <div class="event-type-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <span>Award Galas & Red Carpets</span>
+                </div>
+                <div class="event-type-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                    <span>Music Concerts & Festivals</span>
+                </div>
+                <div class="event-type-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <span>Weddings & Receptions</span>
+                </div>
+                <div class="event-type-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                    <span>Graduations & Convocations</span>
+                </div>
+                <div class="event-type-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                    <span>Milestones & Private Parties</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= TRUST & STATS BAR ================= -->
+    <section class="trust-bar">
+        <div class="container">
+            <div class="trust-grid">
+                <div class="trust-item">
+                    <div class="trust-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </div>
+                    <div>
+                        <div class="trust-val">500,000+</div>
+                        <div class="trust-lbl">Photos Delivered Across All Events</div>
+                    </div>
+                </div>
+
+                <div class="trust-item">
+                    <div class="trust-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <div>
+                        <div class="trust-val">99.8%</div>
+                        <div class="trust-lbl">Attendee Delight & Satisfaction</div>
+                    </div>
+                </div>
+
+                <div class="trust-item">
+                    <div class="trust-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    </div>
+                    <div>
+                        <div class="trust-val">2.4s</div>
+                        <div class="trust-lbl">Average Face Match Speed</div>
+                    </div>
+                </div>
+
+                <div class="trust-item">
+                    <div class="trust-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <div>
+                        <div class="trust-val">100%</div>
+                        <div class="trust-lbl">Private & Encrypted Event Portals</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= ABOUT PHOTONA SECTION ================= -->
+    <section class="section-pad about-section" id="about">
+        <div class="container">
+            <div class="section-head text-center">
+                <span class="section-pill">BUILT FOR EVERY CELEBRATION</span>
+                <h2 class="section-title">Engineered for All Live <span class="gradient-text">Events & Gatherings</span></h2>
+                <p class="section-desc mx-auto">
+                    Whether you are documenting a high-profile industry convention, a 15,000-person music festival, an elegant wedding, or a private VIP gala, Photona removes the friction of photo distribution and turns your coverage into an instant live sensation.
+                </p>
+            </div>
+
+            <!-- About Intro Story & Quote -->
+            <div class="about-intro-grid">
+                <div class="about-story-text">
+                    <p>
+                        In traditional event photography, attendees leave the venue and forget to look for event photos, or face public Google Drive folders packed with thousands of unorganized files.
+                    </p>
+                    <p>
+                        <strong>Photona transforms every gathering.</strong> With our private facial discovery technology, attendees simply point their phone, snap a 1-second selfie, and immediately receive all their candid and stage moments. Your studio or agency gains instant viral visibility, higher brand engagement, and glowing organizer reviews.
+                    </p>
+                </div>
+
+                <div class="quote-card">
+                    <p class="quote-quote">
+                        "We cover massive corporate tech expos on Thursdays and 800-guest luxury galas on Saturdays. Photona handled 12,000 photos in a single weekend flawlessly. Attendees are thrilled getting their pictures while still at the event."
+                    </p>
+                    <div class="quote-author">
+                        <div class="author-avatar">AK</div>
+                        <div class="author-info">
+                            <h4>Apex Live Media & Events</h4>
+                            <span>Director of Event Production & Commercial Photography</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4 Pillars of Studio Excellence -->
+            <div class="pillars-grid">
+                <div class="pillar-card">
+                    <div class="pillar-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <h3 class="pillar-title">Live Event Delivery</h3>
+                    <p class="pillar-desc">
+                        Publish galleries while the event energy is at its peak. Attendees share photos to Instagram and LinkedIn before the day concludes.
+                    </p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <h3 class="pillar-title">Discreet Privacy Controls</h3>
+                    <p class="pillar-desc">
+                        PIN protection, isolated attendee search results, and strict GDPR-grade privacy safeguards for high-profile executive gatherings.
+                    </p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    </div>
+                    <h3 class="pillar-title">Studio & Sponsor Branding</h3>
+                    <p class="pillar-desc">
+                        Display your studio logo or corporate sponsor banners across mobile portals, customized download pages, and watermarked photos.
+                    </p>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-icon-box">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    </div>
+                    <h3 class="pillar-title">Zero Friction Experience</h3>
+                    <p class="pillar-desc">
+                        No mobile apps to download and no account sign-up needed for attendees. Runs instantly in any standard mobile browser.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= HOW PHOTONA WORKS (NON-TECHNICAL) ================= -->
+    <section class="section-pad how-section" id="how-it-works">
+        <div class="container">
+            <div class="section-head text-center">
+                <span class="section-pill">EFFORTLESS WORKFLOW</span>
+                <h2 class="section-title">How Photona Works For <span class="gradient-text">Any Event Size</span></h2>
+                <p class="section-desc mx-auto">
+                    A smooth 4-step creative journey that empowers your photographers to shoot while attendees celebrate.
+                </p>
+            </div>
+
+            <div class="how-layout">
+                <!-- Visual Card with Real Attendee Experience Photo -->
+                <div class="how-media-col">
+                    <div class="how-media-card">
+                        <img src="{% static 'images/how_it_works.jpg' %}" alt="Event attendees enjoying instant photo discovery" class="how-media-img">
+                        <div class="how-float-pill">
+                            <div class="how-float-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <div class="how-float-text">
+                                <h5>Instant Match Found</h5>
+                                <p>14 high-resolution event photos ready</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Simple Steps -->
+                <div class="steps-stack">
+                    <!-- Step 1 -->
+                    <div class="step-card">
+                        <div class="step-number-wrap">
+                            <div class="step-badge">01</div>
+                        </div>
+                        <div class="step-details">
+                            <h4>Shoot Any Event & Batch Upload</h4>
+                            <p>
+                                Capture the energy of your event. Drop hundreds or thousands of high-res photos into Photona in one smooth upload batch with zero quality degradation.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="step-card">
+                        <div class="step-number-wrap">
+                            <div class="step-badge">02</div>
+                        </div>
+                        <div class="step-details">
+                            <h4>Intelligent Visual Organization</h4>
+                            <p>
+                                Photona automatically indexes all attendee faces, stage appearances, candid conversations, and group portraits in seconds with no manual tagging required.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="step-card">
+                        <div class="step-number-wrap">
+                            <div class="step-badge">03</div>
+                        </div>
+                        <div class="step-details">
+                            <h4>Share Event QR on Screens or Badges</h4>
+                            <p>
+                                Print QR codes on event badges, display them on venue projectors, or place chic standees on dinner tables. Attendees simply scan with their phone.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="step-card">
+                        <div class="step-number-wrap">
+                            <div class="step-badge">04</div>
+                        </div>
+                        <div class="step-details">
+                            <h4>One Selfie, All Their Memories</h4>
+                            <p>
+                                Each attendee snaps a quick selfie. In seconds, every picture of them from the keynote, red carpet, dance floor, or celebration appears ready to download and share.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= SUBSCRIPTION PLANS SECTION ================= -->
+    <section class="section-pad plans-section" id="plans">
+        <div class="container">
+            <div class="section-head text-center">
+                <span class="section-pill">STUDIO & AGENCY TIERS</span>
+                <h2 class="section-title">Transparent Plans for <span class="gradient-text">Every Event Volume</span></h2>
+                <p class="section-desc mx-auto">
+                    Scale effortlessly with high-capacity storage, rapid face discovery, and custom branding tailored to your events.
+                </p>
+
+                <!-- Billing Switcher Toggle -->
+                <div class="billing-switch-wrap">
+                    <span class="billing-lbl active" id="label-monthly">Monthly Billing</span>
+                    <button type="button" class="billing-toggle-btn" id="billing-toggle" role="switch" aria-checked="false" aria-label="Toggle annual and monthly billing">
+                        <span class="slider"></span>
+                    </button>
+                    <span class="billing-lbl" id="label-annual">
+                        Annual Billing
+                        <span class="discount-tag">Save 20% + 2 Mo Free</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Pricing Cards Grid -->
+            <div class="pricing-grid">
+
+                <!-- Tier 1: Solo Starter -->
+                <div class="pricing-card">
+                    <div class="plan-head">
+                        <h3>Solo Starter</h3>
+                        <p class="plan-for">Ideal for freelance photographers covering weekend parties and intimate events.</p>
+                        <div class="plan-price-row">
+                            <span class="plan-curr">$</span>
+                            <span class="plan-val" data-monthly="29" data-annual="23">29</span>
+                            <span class="plan-cycle">/month</span>
+                        </div>
+                        <div class="plan-billed-note" data-annual-text="Billed $276 annually (Save $72)">
+                            Billed monthly, cancel anytime
+                        </div>
+                    </div>
+
+                    <ul class="plan-features-list">
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Up to <strong>5 Active Event Albums</strong></span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>15,000 High-Res Photos</strong> Vault</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>2,000 Facial Searches</strong> / month</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Sleek Mobile & Tablet Portals</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Standard Email Support</span>
+                        </li>
+                    </ul>
+
+                    <a href="{% url 'register' %}" class="btn-plan">
+                        Select Starter
+                    </a>
+                </div>
+
+                <!-- Tier 2: Studio Pro (FEATURED) -->
+                <div class="pricing-card featured">
+                    <div class="featured-ribbon">✦ MOST POPULAR FOR EVENT STUDIOS</div>
+
+                    <div class="plan-head">
+                        <h3>Studio Pro</h3>
+                        <p class="plan-for">Designed for active event photography studios, galas, and multi-event teams.</p>
+                        <div class="plan-price-row">
+                            <span class="plan-curr">$</span>
+                            <span class="plan-val" data-monthly="79" data-annual="63">79</span>
+                            <span class="plan-cycle">/month</span>
+                        </div>
+                        <div class="plan-billed-note" data-annual-text="Billed $756 annually (Save $192)">
+                            Billed monthly, cancel anytime
+                        </div>
+                    </div>
+
+                    <ul class="plan-features-list">
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Up to <strong>25 Active Event Albums</strong></span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>75,000 High-Res Photos</strong> Vault</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>10,000 Facial Searches</strong> / month</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>Custom Studio & Sponsor Watermarks</strong></span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>VIP Priority Batch Processing Queue</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Priority Studio Concierge Support</span>
+                        </li>
+                    </ul>
+
+                    <a href="{% url 'register' %}" class="btn-plan">
+                        Get Started with Studio Pro
+                    </a>
+                </div>
+
+                <!-- Tier 3: Elite Enterprise -->
+                <div class="pricing-card">
+                    <div class="plan-head">
+                        <h3>Elite Enterprise</h3>
+                        <p class="plan-for">Tailored for large event production agencies, festivals, and major conferences.</p>
+                        <div class="plan-price-row">
+                            <span class="plan-curr">$</span>
+                            <span class="plan-val" data-monthly="199" data-annual="159">199</span>
+                            <span class="plan-cycle">/month</span>
+                        </div>
+                        <div class="plan-billed-note" data-annual-text="Billed $1,908 annually (Save $480)">
+                            Billed monthly, cancel anytime
+                        </div>
+                    </div>
+
+                    <ul class="plan-features-list">
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>Unlimited Active Event Albums</strong></span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>250,000+ High-Res Photos</strong> Vault</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span><strong>35,000 Facial Searches</strong> / month</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Custom White-Label Domain (photos.yourstudio.com)</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Multi-Photographer Team Seats</span>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            <span>Dedicated 24/7 Account Executive</span>
+                        </li>
+                    </ul>
+
+                    <a href="{% url 'register' %}" class="btn-plan">
+                        Select Enterprise
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= STUDIO LOGIN SECTION ================= -->
+    <section class="section-pad login-section" id="login">
+        <div class="login-glow-bg"></div>
+
+        <div class="container">
+            <div class="login-card-container">
+                <div class="login-card">
+
+                    <div class="login-card-head">
+                        <div class="login-icon-badge">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                        <h3>Studio Access Portal</h3>
+                        <p>Sign in to manage your active events, client galleries, and live attendee analytics.</p>
+                    </div>
+
+                    {% if login_error %}
+                        <div class="login-alert-error" id="login-error-flag">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <span>{{ login_error }}</span>
+                        </div>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                        <div class="logged-in-box">
+                            <div class="logged-in-user-badge">
+                                <span>✦ Signed in as: <strong>{{ user.username }}</strong></span>
+                            </div>
+                            <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.94rem;">
+                                Connected to <strong>{{ user.tenant.name|default:"Studio Portal" }}</strong>
+                            </p>
+                            <div class="logged-in-actions">
+                                <a href="{% url 'dashboard' %}" class="btn-hero-primary" style="justify-content: center; width: 100%;">
+                                    <span>Enter Studio Dashboard</span>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </a>
+                                <a href="{% url 'logout' %}" class="btn-hero-secondary" style="justify-content: center; width: 100%;">
+                                    <span>Sign Out</span>
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <form method="post" action="{% url 'landing' %}" class="auth-form" id="landing-login-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="login_action" value="true">
+
+                            <!-- Username -->
+                            <div class="form-group">
+                                <label for="landing-username" class="form-label">Username</label>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    <input
+                                        type="text"
+                                        id="landing-username"
+                                        name="username"
+                                        class="form-control"
+                                        placeholder="Enter your studio username"
+                                        required
+                                        autocomplete="username"
+                                    >
+                                </div>
+                            </div>
+
+                            <!-- Password with Show/Hide Toggle -->
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label for="landing-password" class="form-label">Password</label>
+                                    <a href="{% url 'login' %}" class="form-forgot-link">Forgot password?</a>
+                                </div>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    <input
+                                        type="password"
+                                        id="landing-password"
+                                        name="password"
+                                        class="form-control"
+                                        placeholder="Enter your password"
+                                        required
+                                        autocomplete="current-password"
+                                    >
+                                    <button type="button" class="toggle-password-btn" id="landing-toggle-password" aria-label="Toggle password visibility">
+                                        <svg class="eye-show" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <svg class="eye-hide" width="18" height="18" viewBox="0 0 20 20" fill="currentColor" style="display: none;">
+                                            <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.064 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn-login-submit">
+                                <span>Sign In to Studio Dashboard</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </form>
+
+                        <div class="login-card-foot">
+                            Don't have a Photona Studio account?
+                            <a href="{% url 'register' %}">Register Your Studio</a>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= CONTACT & CONCIERGE SECTION ================= -->
+    <section class="section-pad contact-section" id="contact">
+        <div class="container">
+            <div class="section-head text-center">
+                <span class="section-pill">GET IN TOUCH</span>
+                <h2 class="section-title">Let's Elevate Your <span class="gradient-text">Event Photography</span></h2>
+                <p class="section-desc mx-auto">
+                    Have questions about large event volumes, festival setups, enterprise white-label domains, or team onboarding? Our studio concierge team is at your service.
+                </p>
+            </div>
+
+            <div class="contact-grid">
+                <!-- Concierge Info -->
+                <div class="contact-info-col">
+                    <div>
+                        <h3 style="font-size: 1.6rem; font-weight: 800; color: #ffffff; margin-bottom: 12px;">Direct Event Concierge</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.7;">
+                            Speak directly with our event technology specialists. We assist photography studios, festival media teams, and corporate production agencies in creating customized real-time delivery experiences.
+                        </p>
+                    </div>
+
+                    <div class="contact-methods">
+                        <div class="contact-method-card">
+                            <div class="contact-method-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            </div>
+                            <div class="contact-method-text">
+                                <h5>Email Support</h5>
+                                <p>concierge@photona.studio</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-method-card">
+                            <div class="contact-method-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            </div>
+                            <div class="contact-method-text">
+                                <h5>Direct Line & WhatsApp</h5>
+                                <p>+1 (800) 746-8662 / +91 98765 43210</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-hours-badge">
+                        <strong>Studio Response Guarantee:</strong> Inquiries submitted before 6 PM are responded to on the very same business day.
+                    </div>
+                </div>
+
+                <!-- Contact Form Card -->
+                <div class="contact-form-card">
+                    <div class="contact-toast" id="contact-toast"></div>
+
+                    <form class="contact-form" id="landing-contact-form">
+                        {% csrf_token %}
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="contact-name" class="form-label">Your Name</label>
+                                <input type="text" id="contact-name" name="name" class="form-control" placeholder="e.g. Marcus Sterling" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-studio" class="form-label">Studio or Event Agency</label>
+                                <input type="text" id="contact-studio" name="studio" class="form-control" placeholder="e.g. Sterling Live Media" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="contact-email" class="form-label">Email Address</label>
+                                <input type="email" id="contact-email" name="email" class="form-control" placeholder="name@yourevents.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-volume" class="form-label">Primary Event Type</label>
+                                <select id="contact-volume" name="volume" class="form-select">
+                                    <option value="corporate">Corporate Conferences & Summits</option>
+                                    <option value="festivals">Music Festivals & Large Concerts</option>
+                                    <option value="galas">Award Galas & Red Carpets</option>
+                                    <option value="weddings">Weddings & Private Celebrations</option>
+                                    <option value="sports">Sports, Marathons & Convocations</option>
+                                    <option value="agency">Full-Service Event Production (All Types)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact-message" class="form-label">How can our concierge assist you?</label>
+                            <textarea id="contact-message" name="message" class="form-textarea" placeholder="Tell us about your upcoming events, annual volume, custom branding needs, or request a tailored live demo..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-contact-submit">
+                            <span>Send Message to Event Concierge</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-top">
+                <div class="footer-brand-col">
+                    <a href="#banners" class="brand-logo" style="margin-bottom: 12px;">
+                        <div class="brand-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><path d="M3 9a2 2 0 0 1 2-2h1.5a1 1 0 0 0 .8-.4l1.4-1.8A2 2 0 0 1 10.3 4h3.4a2 2 0 0 1 1.6.8l1.4 1.8a1 1 0 0 0 .8.4H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                        </div>
+                        <div class="brand-text-col">
+                            <span class="brand-name">PHOTONA</span>
+                            <span class="brand-tagline">EVENTS & CELEBRATIONS</span>
+                        </div>
+                    </a>
+                    <p>
+                        The next-generation instant photo delivery platform for corporate summits, concerts, festivals, award galas, weddings, and every memorable live celebration worldwide.
+                    </p>
+                </div>
+
+                <div class="footer-col">
+                    <h5>Navigation</h5>
+                    <ul class="footer-links">
+                        <li><a href="#banners">Home Banners</a></li>
+                        <li><a href="#event-types">All Event Types</a></li>
+                        <li><a href="#about">About Photona</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#plans">Pricing Tiers</a></li>
+                        <li><a href="#login">Studio Login</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h5>Event Solutions</h5>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'register' %}">Create Studio Account</a></li>
+                        <li><a href="{% url 'plans' %}">On-Demand Recharge</a></li>
+                        <li><a href="#contact">Festival & Enterprise Setup</a></li>
+                        <li><a href="#contact">Concierge Walkthrough</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h5>Security & Trust</h5>
+                    <ul class="footer-links">
+                        <li><a href="javascript:void(0)">Zero Data Retention Policy</a></li>
+                        <li><a href="javascript:void(0)">Private Attendee Isolation</a></li>
+                        <li><a href="javascript:void(0)">256-Bit TLS Encryption</a></li>
+                        <li><a href="javascript:void(0)">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Photona Luxe Studio. All rights reserved. Built for visual storytellers and event creators worldwide.</p>
+                <p style="color: var(--gold-start); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;">
+                    ✦ THE GLOBAL STANDARD FOR LIVE EVENT DELIVERY
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to top floating button -->
+    <button type="button" class="back-to-top" id="back-to-top-btn" aria-label="Back to top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>
+
+    <!-- JavaScript -->
+    <script src="{% static 'js/landing.js' %}?v=3.0"></script>
+</body>
+</html>

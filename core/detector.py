@@ -12,8 +12,10 @@ import os
 from pathlib import Path
 
 # Limit background worker thread contention on CPU
-os.environ.setdefault("OMP_NUM_THREADS", "2")
-os.environ.setdefault("MKL_NUM_THREADS", "2")
+os.environ["OMP_NUM_THREADS"] = "2"
+os.environ["MKL_NUM_THREADS"] = "2"
+os.environ["ORT_NUM_THREADS"] = "2"
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
 
 import cv2
 import numpy as np
@@ -128,9 +130,6 @@ def process_image(
     # --------------------------------------------------
 
     faces = app.get(image)
-
-    if len(faces) == 0:
-        return None, []
 
     # --------------------------------------------------
     # Create Image Record
@@ -283,3 +282,20 @@ def process_query_image(
         "status": "success",
         "embedding": query_embedding,
     }
+
+# ==========================================================
+# Worker Process Model Singleton
+# ==========================================================
+
+_worker_face_app = None
+
+
+def get_worker_face_app():
+    """
+    Return a cached InsightFace model instance for this worker process.
+    Prevents reloading 650MB+ model weights for every photo/batch.
+    """
+    global _worker_face_app
+    if _worker_face_app is None:
+        _worker_face_app = load_face_model()
+    return _worker_face_app

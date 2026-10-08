@@ -12,6 +12,68 @@ from .models import User
 from django.db.models import Count
 
 
+def landing_page_view(request):
+    """
+    Renders the Photona Luxe Studio landing page.
+    Includes sliding hero banners, about section, how it works,
+    subscription plans, contact concierge, and embedded studio login.
+    """
+    login_error = None
+
+    if request.method == "POST" and request.POST.get("login_action") == "true":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+
+        if not username or not password:
+            login_error = "Please enter both your studio username and password."
+        else:
+            user = authenticate(
+                request,
+                username=username,
+                password=password
+            )
+
+            if user is not None:
+                login(request, user)
+                return redirect("dashboard")
+            else:
+                login_error = "Invalid username or password. Please verify and try again."
+
+    context = {
+        "login_error": login_error,
+    }
+
+    return render(
+        request,
+        "accounts/landing.html",
+        context
+    )
+
+
+def contact_submit_view(request):
+    """
+    Handles inquiries and demo requests submitted from the landing page.
+    """
+    if request.method == "POST":
+        name = request.POST.get("name", "Valued Studio Partner").strip()
+        email = request.POST.get("email", "").strip()
+
+        message = (
+            f"Thank you, {name}! Our studio concierge has received your request "
+            f"and will reach out to {email or 'you'} within 24 hours."
+        )
+
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({
+                "status": "success",
+                "message": message,
+            })
+
+        return redirect("/#contact")
+
+    return redirect("landing")
+
+
 def login_view(request):
 
     # Already logged-in users do not need to login again

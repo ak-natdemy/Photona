@@ -199,6 +199,20 @@ class EventPhoto(models.Model):
         default="pending"
     )
 
+    error_message = models.TextField(
+        blank=True,
+        default=""
+    )
+
+    retry_count = models.IntegerField(
+        default=0
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["event", "processing_status"]),
+        ]
+
     @property
     def thumbnail_url(self):
         if self.thumbnail:
@@ -336,3 +350,94 @@ class EventPerson(models.Model):
     def __str__(self):
         return f"{self.event.name} - {self.name} ({self.photo_count} photos)"
 
+
+
+class PhotoUploadSession(models.Model):
+    """
+    Tracks an upload session for an event to support chunked,
+    concurrent, idempotent, and resumable photo uploads.
+    """
+    STATUS_CHOICES = [
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    ]
+
+    upload_id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        db_index=True
+    )
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="upload_sessions"
+    )
+
+    total_files = models.IntegerField(
+        default=0
+    )
+
+    total_chunks = models.IntegerField(
+        default=0
+    )
+
+    completed_chunks = models.IntegerField(
+        default=0
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="in_progress"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"UploadSession {self.upload_id} - Event {self.event.name} ({self.completed_chunks}/{self.total_chunks})"
+
+
+class PhotoUploadChunk(models.Model):
+    """
+    Tracks an individual uploaded chunk to guarantee idempotency on retries.
+    """
+    session = models.ForeignKey(
+        PhotoUploadSession,
+        on_delete=models.CASCADE,
+        related_name="chunks"
+    )
+
+    chunk_index = models.IntegerField()
+
+    file_count = models.IntegerField(
+        default=0
+    )
+
+    status = models.CharField(
+        max_length=20,
+        default="completed"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        unique_together = ("session", "chunk_index")
+        indexes = [
+            models.Index(fields=["session", "chunk_index"]),
+        ]
+
+    def __str__(self):
+        return f"Chunk {self.chunk_index} of Session {self.session.upload_id}"

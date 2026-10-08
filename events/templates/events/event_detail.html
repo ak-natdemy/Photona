@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ event.name }} | Photona Studio Suite</title>
-    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v=5.3">
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v=21.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     <div class="dashboard-layout standalone-layout">
 
         <!-- ================= MAIN VIEWPORT ================= -->
-        <main class="main-viewport" id="event-viewport" data-event-id="{{ event.id }}" data-status-url="{% url 'events:ai_status' event.id %}">
+        <main class="main-viewport" id="event-viewport" data-event-id="{{ event.id }}" data-status-url="{% url 'events:ai_status' event.id %}" data-has-processing="{{ has_processing_photos|yesno:'true,false' }}">
             <!-- Topbar Header -->
             <header class="topbar">
                 <div class="topbar-left-group">
@@ -279,7 +279,7 @@
                             <form action="{% url 'events:upload_photos' event.id %}" method="POST" enctype="multipart/form-data" class="upload-dropzone-form" id="local-upload-form">
                                 {% csrf_token %}
                                 <div class="dropzone-box" id="dropzone-box">
-                                    <input type="file" name="images" id="photos-file-input" multiple accept="image/jpeg,image/png,image/webp" class="dropzone-file-input" title="">
+                                    <input type="file" name="images" id="photos-file-input" multiple accept="image/*,.jpg,.jpeg,.png,.webp,.JPG,.JPEG,.PNG" class="dropzone-file-input" title="">
                                     
                                     <div class="dropzone-content" id="dropzone-idle-content">
                                         <div class="dropzone-icon-circle">
@@ -349,13 +349,61 @@
 
                                 <div class="dropzone-footer">
                                     <span class="upload-tip">Processed in background using facial indexing.</span>
-                                    <button type="submit" class="btn-primary-action btn-upload-start" id="btn-start-upload" disabled>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        </svg>
-                                        <span id="upload-btn-label">Upload</span>
-                                    </button>
+                                    
+                                    <div class="dropzone-footer-actions">
+                                        <!-- Photo Compression Toggle Button (without ON/OFF text) -->
+                                        <button type="button" class="btn-compress-toggle" id="btn-detail-compress-toggle" aria-pressed="false" title="Toggle photo compression">
+                                            <span class="compress-toggle-switch">
+                                                <span class="toggle-knob"></span>
+                                            </span>
+                                            <span class="compress-label">Compress the photos</span>
+                                        </button>
+
+                                        <button type="submit" class="btn-primary-action btn-upload-start" id="btn-start-upload" disabled>
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            <span id="upload-btn-label">Upload</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Small & Simple Size Adjusting Bar (Original Size down to 2 MB Max Compression) -->
+                                <div class="compress-adjuster-bar-mini" id="detail-compress-adjuster-bar" style="display: none;">
+                                    <div class="adjuster-mini-inner">
+                                        <div class="adjuster-header-row">
+                                            <div class="adjuster-title-group">
+                                                <span class="adjuster-mini-title">⚡ Compression Target:</span>
+                                                <span class="adjuster-mini-val" id="detail-compress-target-display">Original Size</span>
+                                            </div>
+                                            <span class="adjuster-mini-help" id="detail-compress-help">All photos upload at 100% original size. Adjust left to compress down to 2 MB maximum.</span>
+                                        </div>
+
+                                        <div class="adjuster-controls-row">
+                                            <div class="slider-track-wrap">
+                                                <span class="slider-end-label left-label">2 MB (Max)</span>
+                                                <input 
+                                                    type="range" 
+                                                    id="detail-compress-slider" 
+                                                    min="2" 
+                                                    max="11" 
+                                                    step="1" 
+                                                    value="11"
+                                                    class="compress-mini-slider"
+                                                    aria-label="Target compression size"
+                                                >
+                                                <span class="slider-end-label right-label">Original</span>
+                                            </div>
+                                            <div class="mini-preset-group">
+                                                <button type="button" class="mini-preset-btn active" data-mb="original">Original</button>
+                                                <button type="button" class="mini-preset-btn" data-mb="6">6 MB</button>
+                                                <button type="button" class="mini-preset-btn" data-mb="4">4 MB</button>
+                                                <button type="button" class="mini-preset-btn" data-mb="3">3 MB</button>
+                                                <button type="button" class="mini-preset-btn" data-mb="2">2 MB (Max)</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -455,211 +503,163 @@
                         </div>
                     </div>
 
-                    {% if photos %}
-                        <!-- Bulk Actions Toolbar (Points 3, 4, 5, 8, 12) -->
-                        <div class="bulk-actions-toolbar">
-                            <div class="bulk-left-group">
-                                <!-- Point 12: Display count badge only when at least 1 image is selected -->
-                                <span class="selected-counter-tag" id="selected-counter-tag" style="display: none;">
-                                    <strong id="selected-count-num">0</strong> selected
-                                </span>
-                            </div>
-
-                            <div class="bulk-right-group">
-                                <!-- Point 3: Select All button is in right corner near Download button -->
-                                <button type="button" class="btn-bulk-toggle" id="btn-select-all">
-                                    <input type="checkbox" id="master-select-checkbox" class="bulk-master-checkbox" aria-label="Select all photos">
-                                    <span id="select-all-label">Select All</span>
-                                </button>
-
-                                <!-- Point 5: Dynamic Download button ("Download All (ZIP)" < 2, "Download Selected (ZIP)" >= 2) -->
-                                <a href="{% url 'events:download_zip' event.id %}" class="btn-bulk-action btn-bulk-primary" id="btn-dynamic-download-zip" title="Download ZIP">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    <span id="download-btn-text">Download All (ZIP)</span>
-                                </a>
-
-                                <!-- Point 4 & 8: Delete button hidden when 0, "Delete" when 1, "Delete All" when >= 2 -->
-                                <button type="button" class="btn-bulk-action btn-bulk-danger" id="btn-dynamic-delete" style="display: none;" title="Delete selected photos">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    </svg>
-                                    <span id="delete-btn-text">Delete</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Live AI Processing Banner (masked until completed, revealed one-by-one) -->
+                    <!-- Live AI Processing Banner (masked until completed, revealed one-by-one) -->
                         <div class="live-ai-progress-banner {% if has_processing_photos %}is-active{% endif %}" id="live-ai-progress-banner" {% if not has_processing_photos %}style="display: none;"{% endif %}>
                             <div class="live-progress-icon-wrap">
-                                <div class="live-progress-pulse-circle">
-                                    <svg class="live-ai-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
-                                    </svg>
+                                <div class="live-progress-loader" aria-label="Processing indicator">
+                                    <div class="loader-orbit-ring"></div>
+                                    <div class="loader-orbit-ring-inner"></div>
+                                    <div class="loader-center-core">
+                                        <svg class="loader-spark-svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="loader-success-check">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                             <div class="live-progress-main">
                                 <div class="live-progress-header-row">
                                     <div class="live-progress-title-col">
                                         <strong class="live-progress-title" id="live-progress-title">
-                                            {% if processing_photos_count > 0 %}
-                                                AI Indexing In Progress...
-                                            {% else %}
-                                                Photos Uploaded & Queued for Processing
-                                            {% endif %}
+                                            Your images are uploading<span class="processing-dots"><span>.</span><span>.</span><span>.</span></span>
                                         </strong>
-                                        <span class="live-progress-subtitle" id="live-progress-subtitle">Photos remain hidden and reveal one-by-one as AI indexing finishes</span>
+                                        <span class="live-progress-subtitle" id="live-progress-subtitle" style="display: none;"></span>
                                     </div>
                                     <span class="live-progress-counter-chip" id="live-progress-counter-chip">
-                                        <strong id="live-completed-count">{{ completed_photos_count }}</strong> of <strong id="live-total-count">{{ total_photos_count }}</strong> ready
+                                        <strong id="live-completed-count">{{ completed_photos_count }}</strong>/<strong id="live-total-count">{{ total_photos_count }}</strong> ready
                                     </span>
                                 </div>
                                 <div class="live-progress-bar-track">
-                                    <div class="live-progress-bar-fill" id="live-progress-bar-fill" style="width: {% if total_photos_count > 0 %}{% widthratio completed_photos_count total_photos_count 100 %}{% else %}0{% endif %}%;"></div>
+                                    <div class="live-progress-bar-fill" id="live-progress-bar-fill" style="width: {% if total_photos_count > 0 %}{% widthratio completed_photos_count total_photos_count 100 %}{% else %}0{% endif %}%;">
+                                        <div class="live-progress-bar-lightpin"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Little Photo Cards Grid (Point 2: Descending order by last added) -->
-                        <div class="photo-cards-grid" id="photo-cards-grid">
-                            {% for photo in photos %}
-                                <div class="little-photo-card {% if photo.processing_status != 'completed' and photo.processing_status != 'ready' %}is-processing status-{{ photo.processing_status }}{% endif %}" id="photo-card-{{ photo.id }}" data-id="{{ photo.id }}" data-status="{{ photo.processing_status }}">
-                                    <!-- Point 6: Rounded shape semi-transparent check tick box at top right corner -->
-                                    <div class="card-select-overlay-right">
-                                        <input type="checkbox" class="photo-checkbox sr-checkbox" value="{{ photo.id }}" id="chk-{{ photo.id }}" aria-label="Select photo #{{ forloop.revcounter }}">
-                                        <label for="chk-{{ photo.id }}" class="custom-glass-chk" title="Select photo">
-                                            <svg class="chk-check-svg" viewBox="0 0 24 24" fill="none" stroke="#191730" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                            </svg>
-                                        </label>
-                                    </div>
-
-                                    <!-- Lightweight Thumbnail Image with Click Preview (Point 4) -->
-                                    <div class="photo-thumb-container" data-full-img="{{ photo.image.url }}" data-photo-id="{{ photo.id }}" data-photo-number="{{ forloop.revcounter }}">
-                                        <img src="{{ photo.thumbnail_url }}" alt="{{ event.name }} photo #{{ forloop.revcounter }}" loading="lazy" class="card-photo-img {% if photo.processing_status != 'completed' and photo.processing_status != 'ready' %}img-masked{% endif %}" id="photo-img-{{ photo.id }}">
-                                        
-                                        <!-- Real-time Masking & Processing Overlay -->
-                                        <div class="photo-processing-overlay {% if photo.processing_status == 'completed' or photo.processing_status == 'ready' %}is-hidden{% endif %}" id="photo-processing-overlay-{{ photo.id }}">
-                                            <div class="proc-overlay-glass">
-                                                <div class="proc-overlay-spinner-wrap" id="proc-spinner-wrap-{{ photo.id }}">
-                                                    {% if photo.processing_status == "processing" %}
-                                                        <div class="proc-ring-spinner"></div>
-                                                    {% elif photo.processing_status == "failed" %}
-                                                        <div class="proc-failed-icon">
-                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round">
-                                                                <circle cx="12" cy="12" r="10"></circle>
-                                                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                                                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                                                            </svg>
-                                                        </div>
-                                                    {% else %}
-                                                        <div class="proc-pulse-dots">
-                                                            <span class="p-dot"></span>
-                                                            <span class="p-dot"></span>
-                                                            <span class="p-dot"></span>
-                                                        </div>
-                                                    {% endif %}
-                                                </div>
-                                                <span class="proc-overlay-badge" id="proc-badge-{{ photo.id }}">
-                                                    {% if photo.processing_status == "processing" %}
-                                                        Indexing Faces...
-                                                    {% elif photo.processing_status == "failed" %}
-                                                        Failed
-                                                    {% else %}
-                                                        In Queue
-                                                    {% endif %}
-                                                </span>
-                                                
-                                            </div>
-                                        </div>
-
-                                        <!-- Hover Action Icons Overlay -->
-                                        <div class="card-hover-actions">
-                                            <!-- Download single photo icon -->
-                                            <a href="{{ photo.image.url }}" download class="hover-action-btn hover-btn-download" title="Download photo">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                                </svg>
-                                            </a>
-
-                                            <!-- Delete single photo icon -->
-                                            <button type="button" class="hover-action-btn hover-btn-delete" data-delete-photo-id="{{ photo.id }}" data-photo-num="{{ forloop.revcounter }}" title="Delete photo">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Photo Card Footer: Number, Added Date/Time, and Status Symbol -->
-                                    <div class="photo-card-info">
-                                        <div class="photo-info-left">
-                                            <!-- Chronological Photo Number -->
-                                            <span class="photo-chrono-number">#{{ forloop.revcounter }}</span>
-                                            <!-- Upload Date and Time -->
-                                            <span class="photo-upload-time" title="{{ photo.uploaded_at|date:'M d, Y · h:i A' }}">
-                                                {{ photo.uploaded_at|date:"M d, Y · h:i A" }}
-                                            </span>
-                                        </div>
-
-                                        <!-- AI Status Symbol -->
-                                        <div class="photo-info-right">
-                                            <span class="ai-status-circle status-{{ photo.processing_status }}"
-                                                  id="photo-status-{{ photo.id }}"
-                                                  title="AI Status: {{ photo.get_processing_status_display }}"
-                                                  data-status="{{ photo.processing_status }}">
-                                                {% if photo.processing_status == "completed" or photo.processing_status == "ready" %}
-                                                    <!-- Green Tick -->
-                                                    <svg class="status-svg" viewBox="0 0 24 24" fill="none">
-                                                        <circle cx="12" cy="12" r="8.5" stroke="#10b981" stroke-width="2" fill="rgba(16, 185, 129, 0.12)" />
-                                                        <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-                                                    </svg>
-                                                {% elif photo.processing_status == "processing" %}
-                                                    <!-- Buffer / Spinner -->
-                                                    <svg class="status-svg circle-buffer-svg" viewBox="0 0 24 24" fill="none">
-                                                        <circle class="buffer-track" cx="12" cy="12" r="8.5" stroke="rgba(255, 162, 0, 0.25)" stroke-width="2.5" />
-                                                        <circle class="buffer-fill" cx="12" cy="12" r="8.5" stroke="#FFA200" stroke-width="2.5" stroke-linecap="round" />
-                                                    </svg>
-                                                {% elif photo.processing_status == "failed" %}
-                                                    <!-- Red Failed -->
-                                                    <svg class="status-svg" viewBox="0 0 24 24" fill="none">
-                                                        <circle cx="12" cy="12" r="8.5" stroke="#ef4444" stroke-width="2" fill="rgba(239, 68, 68, 0.12)" />
-                                                        <line x1="8.5" y1="8.5" x2="15.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
-                                                        <line x1="15.5" y1="8.5" x2="8.5" y2="15.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" />
-                                                    </svg>
-                                                {% else %}
-                                                    <!-- Pending -->
-                                                    <svg class="status-svg" viewBox="0 0 24 24" fill="none">
-                                                        <circle cx="12" cy="12" r="8.5" stroke="#94a3b8" stroke-width="2" fill="rgba(148, 163, 184, 0.12)" />
-                                                        <circle cx="12" cy="12" r="2.5" fill="#64748b" />
-                                                    </svg>
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                    <!-- Bulk Actions Toolbar -->
+                    <div class="bulk-actions-toolbar" id="gallery-bulk-toolbar" {% if not photos %}style="display: none;"{% endif %}>
+                        <div class="bulk-left-group">
+                            <span class="selected-counter-tag" id="selected-counter-tag" style="display: none;">
+                                <strong id="selected-count-num">0</strong> selected
+                            </span>
                         </div>
-                    {% else %}
-                        <!-- Empty Photos State -->
-                        <div class="empty-state-panel">
-                            <div class="empty-icon-circle">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                    <polyline points="21 15 16 10 5 21"></polyline>
+
+                        <div class="bulk-right-group">
+                            <button type="button" class="btn-bulk-toggle" id="btn-select-all">
+                                <input type="checkbox" id="master-select-checkbox" class="bulk-master-checkbox" aria-label="Select all photos">
+                                <span id="select-all-label">Select All</span>
+                            </button>
+
+                            <a href="{% url 'events:download_zip' event.id %}" class="btn-bulk-action btn-bulk-primary" id="btn-dynamic-download-zip" title="Download ZIP">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
-                            </div>
-                            <h3>No Photos In This Album Yet</h3>
-                            <p>Choose an ingestion method above to upload shoot files or import directly from Google Drive.</p>
+                                <span id="download-btn-text">Download All (ZIP)</span>
+                            </a>
+
+                            <button type="button" class="btn-bulk-action btn-bulk-danger" id="btn-dynamic-delete" style="display: none;" title="Delete selected photos">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                <span id="delete-btn-text">Delete</span>
+                            </button>
                         </div>
+                    </div>
+
+                    <!-- Little Photo Cards Grid -->
+                    <div class="photo-cards-grid" id="photo-cards-grid" {% if not photos %}style="display: none;"{% endif %}>
+                        {% for photo in photos %}
+                            {% if photo.processing_status == "completed" or photo.processing_status == "ready" %}
+                            <div class="little-photo-card" id="photo-card-{{ photo.id }}" data-id="{{ photo.id }}" data-status="{{ photo.processing_status }}">
+                                <div class="card-select-overlay-right">
+                                    <input type="checkbox" class="photo-checkbox sr-checkbox" value="{{ photo.id }}" id="chk-{{ photo.id }}" aria-label="Select photo #{{ forloop.revcounter }}">
+                                    <label for="chk-{{ photo.id }}" class="custom-glass-chk" title="Select photo">
+                                        <svg class="chk-check-svg" viewBox="0 0 24 24" fill="none" stroke="#191730" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </label>
+                                </div>
+
+                                <div class="photo-thumb-container" data-full-img="{{ photo.image.url }}" data-photo-id="{{ photo.id }}" data-photo-number="{{ forloop.revcounter }}">
+                                    <img src="{{ photo.thumbnail_url }}" alt="{{ event.name }} photo #{{ forloop.revcounter }}" loading="lazy" class="card-photo-img" id="photo-img-{{ photo.id }}">
+
+                                    <div class="card-hover-actions">
+                                        <a href="{{ photo.image.url }}" download class="hover-action-btn hover-btn-download" title="Download photo">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                <polyline points="7 10 12 15 17 10"></polyline>
+                                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                                            </svg>
+                                        </a>
+
+                                        <button type="button" class="hover-action-btn hover-btn-delete" data-delete-photo-id="{{ photo.id }}" data-photo-num="{{ forloop.revcounter }}" title="Delete photo">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="photo-card-info">
+                                    <div class="photo-info-left">
+                                        <span class="photo-chrono-number">#{{ forloop.revcounter }}</span>
+                                        <span class="photo-upload-time" title="{{ photo.uploaded_at|date:'M d, Y · h:i A' }}">
+                                            {{ photo.uploaded_at|date:"M d, Y · h:i A" }}
+                                        </span>
+                                    </div>
+
+                                    <div class="photo-info-right">
+                                        <span class="ai-status-circle status-completed"
+                                              id="photo-status-{{ photo.id }}"
+                                              title="AI Status: Ready"
+                                              data-status="completed">
+                                            <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                                <circle cx="12" cy="12" r="8.5" stroke="#10b981" stroke-width="2" fill="rgba(16, 185, 129, 0.12)" />
+                                                <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    {% if not photos %}
+                        {% if has_processing_photos %}
+                            <!-- In-Progress State: Photos indexing in background -->
+                            <div class="empty-state-panel processing-empty-state" id="processing-empty-state">
+                                <div class="empty-icon-circle proc-spin-circle">
+                                    <svg class="status-svg circle-buffer-svg" viewBox="0 0 24 24" fill="none" style="width: 44px; height: 44px;">
+                                        <circle class="buffer-track" cx="12" cy="12" r="8.5" stroke="rgba(255, 162, 0, 0.2)" stroke-width="2.5" />
+                                        <circle class="buffer-fill" cx="12" cy="12" r="8.5" stroke="#FFA200" stroke-width="2.5" stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                                <h3>Processing Photos In Order...</h3>
+                                <p>AI facial recognition is indexing your uploaded photos. Each photo will appear here live as soon as it is ready.</p>
+                            </div>
+                        {% else %}
+                            <div class="empty-state-panel" id="no-photos-empty-state">
+                                <div class="empty-icon-circle">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                </div>
+                                <h3>No Photos In This Album Yet</h3>
+                                <p>Choose an ingestion method above to upload shoot files or import directly from Google Drive.</p>
+                            </div>
+                        {% endif %}
                     {% endif %}
                     </div> <!-- /#tab-view-all-photos -->
 
@@ -1011,7 +1011,7 @@
     </div>
 
     <!-- Real-time Polling & Interactive Controls -->
-    <script src="{% static 'js/event_detail.js' %}?v=5.3"></script>
+    <script src="{% static 'js/event_detail.js' %}?v=21.0"></script>
 
         <!-- ================= SHARE EVENT & ACCESS LINKS HUB ================= -->
     <div class="modal-dialog-backdrop" id="share-event-modal" aria-hidden="true" role="dialog" aria-modal="true">

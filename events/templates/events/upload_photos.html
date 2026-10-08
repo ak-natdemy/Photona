@@ -101,6 +101,13 @@
                             action="{% url 'events:upload_photos' event.id %}"
                             method="post"
                             enctype="multipart/form-data"
+                            data-chunk-url="{% url 'events:upload_photo_chunk' event.id %}"
+                            data-complete-url="{% url 'events:upload_complete' event.id %}"
+                            data-session-base-url="/events/{{ event.id }}/upload/session/"
+                            data-chunk-size="{{ upload_chunk_size|default:50 }}"
+                            data-concurrency="{{ upload_concurrency|default:3 }}"
+                            data-max-retries="{{ max_upload_retries|default:3 }}"
+                            data-use-chunked="{% if use_chunked_upload %}true{% else %}false{% endif %}"
                         >
                             {% csrf_token %}
 
@@ -158,7 +165,7 @@
 
                                     <div class="dropzone-specs">
                                         <span class="spec-pill">High-Res JPG, PNG, or WebP</span>
-                                        <span class="spec-pill">Up to 20MB per photo</span>
+                                        <span class="spec-pill">Raw & High-Res up to 100MB</span>
                                         <span class="spec-pill">Multi-file batch supported</span>
                                     </div>
                                 </div>
@@ -202,7 +209,16 @@
                                     <div class="progress-track">
                                         <div class="progress-fill" id="upload-progress-fill"></div>
                                     </div>
-                                    <p class="progress-note">Please keep this window open while photos are transferring to your storage server.</p>
+                                    <div class="progress-sub-info" style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-top:6px;">
+                                        <span id="progress-chunk-detail">Preparing upload...</span>
+                                        <span id="progress-speed-detail"></span>
+                                    </div>
+                                    <div id="retry-container" style="display:none; margin-top:10px;">
+                                        <button type="button" id="btn-retry-failed-chunks" class="btn-staging-secondary" style="background:#ef4444; color:#fff; border:none; padding:6px 14px; border-radius:6px; font-weight:600; cursor:pointer;">
+                                            ⚠️ Retry Failed Chunks
+                                        </button>
+                                    </div>
+                                    <p class="progress-note" style="margin-top:8px;">Please keep this window open while photos are transferring to your storage server.</p>
                                 </div>
 
                                 <!-- Bottom Form Actions -->
@@ -211,7 +227,58 @@
                                         <span>Cancel</span>
                                     </a>
 
-                                    <button type="submit" class="btn-upload-submit" id="submit-upload-btn">
+                                    <div class="upload-actions-right-cluster">
+                                        <!-- Photo Compression Suite (Small toggle button & interactive adjusting bar) -->
+                                        <div class="compress-suite" id="compress-suite">
+                                            <button type="button" class="btn-compress-toggle" id="btn-compress-toggle" aria-pressed="false" title="Toggle photo compression">
+                                                <span class="compress-toggle-switch">
+                                                    <span class="toggle-knob"></span>
+                                                </span>
+                                                <span class="compress-label">Compress the photos</span>
+                                                <span class="compress-state-badge" id="compress-state-badge">OFF</span>
+                                            </button>
+
+                                            <!-- Interactive Adjusting Bar (revealed when toggle is activated) -->
+                                            <div class="compress-adjuster-bar" id="compress-adjuster-bar" style="display: none;">
+                                                <div class="adjuster-header">
+                                                    <div class="adjuster-title-group">
+                                                        <span class="adjuster-icon">⚡</span>
+                                                        <span class="adjuster-title">Max photo size:</span>
+                                                    </div>
+                                                    <span class="adjuster-value-pill" id="compress-target-display">4 MB</span>
+                                                </div>
+                                                <div class="adjuster-slider-row">
+                                                    <span class="slider-boundary-lbl">4 MB</span>
+                                                    <input 
+                                                        type="range" 
+                                                        id="compress-size-slider" 
+                                                        min="4" 
+                                                        max="16" 
+                                                        step="1" 
+                                                        value="4"
+                                                        class="compress-range-slider"
+                                                        aria-label="Adjust max photo size"
+                                                    >
+                                                    <span class="slider-boundary-lbl">16 MB</span>
+                                                </div>
+                                                <div class="slider-quick-ticks">
+                                                    <button type="button" class="tick-btn active" data-mb="4">4MB (Recommended)</button>
+                                                    <button type="button" class="tick-btn" data-mb="6">6MB</button>
+                                                    <button type="button" class="tick-btn" data-mb="8">8MB</button>
+                                                    <button type="button" class="tick-btn" data-mb="10">10MB</button>
+                                                </div>
+                                                <div class="adjuster-info-note">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                                    </svg>
+                                                    <span>Photos &gt; <strong id="compress-hint-val">4 MB</strong> will be compressed to maximum <strong id="compress-hint-val2">4 MB</strong>. Photos ≤ <strong id="compress-hint-val3">4 MB</strong> keep their original size.</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn-upload-submit" id="submit-upload-btn">
                                         <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                             <polyline points="17 8 12 3 7 8"></polyline>
@@ -220,6 +287,7 @@
                                         <span id="submit-btn-text">Upload & Process Photos</span>
                                         <span class="btn-badge" id="submit-btn-count">0</span>
                                     </button>
+                                    </div>
                                 </div>
                             </div>
                         </form>

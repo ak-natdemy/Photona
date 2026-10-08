@@ -17,7 +17,12 @@ from .forms import (
     SelfieSearchForm,
 )
 
-from .tasks import process_event_photos_task
+from .tasks import (
+    process_event_photos_task,
+    orchestrate_event_processing,
+    cluster_event_people_task,
+)
+from config import USE_PARALLEL_ORCHESTRATOR
 from services.search_service import search_event
 
 import logging
@@ -74,10 +79,10 @@ def event_detail(request, event_id):
         tenant=request.user.tenant
     )
 
-    # Descending order (last added photo first)
-    photos = event.photos.all().order_by(
-        "-uploaded_at", "-id"
-    )
+    # Descending order: latest uploaded / processed photo FIRST at top!
+    photos = event.photos.filter(
+        processing_status__in=["completed", "ready"]
+    ).order_by("-uploaded_at", "-id")
 
     share_links = event.share_links.filter(is_active=True).order_by("-created_at")
     if not share_links.exists():
@@ -122,16 +127,15 @@ def event_detail(request, event_id):
     people = event.people.prefetch_related("photos").all()
     if not people.exists() and event.ai_status == "ready" and photos.exists():
         try:
-            from .services.person_clustering import cluster_event_people
-            cluster_event_people(event)
-            people = event.people.prefetch_related("photos").all()
+            cluster_event_people_task.delay(event.id)
         except Exception as e:
-            logger.warning("Initial face clustering failed on event_detail: %s", e)
+            logger.warning("Initial face clustering dispatch failed on event_detail: %s", e)
 
-    total_photos_count = photos.count()
-    processing_photos_count = photos.filter(processing_status="processing").count()
-    pending_photos_count = photos.filter(processing_status="pending").count()
-    completed_photos_count = photos.filter(processing_status__in=["completed", "ready"]).count()
+    all_event_photos = event.photos.all()
+    total_photos_count = all_event_photos.count()
+    processing_photos_count = all_event_photos.filter(processing_status="processing").count()
+    pending_photos_count = all_event_photos.filter(processing_status="pending").count()
+    completed_photos_count = photos.count()
     has_processing_photos = (processing_photos_count + pending_photos_count) > 0
 
     return render(
@@ -386,7 +390,10 @@ def create_event(request):
                     event.ai_status = "processing"
                     event.save(update_fields=["ai_status"])
 
-                process_event_photos_task.delay(event.id)
+                if USE_PARALLEL_ORCHESTRATOR:
+                    orchestrate_event_processing.delay(event.id)
+                else:
+                    process_event_photos_task.delay(event.id)
                 messages.success(request, f"Event created with {len(created_photos)} photo(s). Facial recognition is processing in the background.")
 
             return redirect(
@@ -444,6 +451,86 @@ def delete_event(request, event_id):
     return redirect("dashboard")
 
 
+def enforce_photo_size_ceiling(uploaded_file, target_mb: float):
+    """
+    Ensures an uploaded image does not exceed target_mb.
+    If the image is already <= target_mb, it is left completely untouched.
+    If greater, it is compressed to fit right within the ceiling while maximizing quality.
+    """
+    if not target_mb or target_mb <= 0:
+        return uploaded_file
+
+    target_bytes = int(target_mb * 1024 * 1024)
+    if uploaded_file.size <= target_bytes:
+        return uploaded_file
+
+    try:
+        from PIL import Image
+        import io
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+
+        uploaded_file.seek(0)
+        img = Image.open(uploaded_file)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
+        # Binary search quality between 50 and 98 to get AS CLOSE TO target_bytes as possible
+        low_q = 50
+        high_q = 98
+        best_io = None
+
+        for _ in range(7):
+            mid_q = (low_q + high_q) // 2
+            out_io = io.BytesIO()
+            img.save(out_io, format="JPEG", quality=mid_q)
+            if out_io.tell() <= target_bytes:
+                best_io = out_io
+                low_q = mid_q + 1 # Try higher quality to fill up to target_bytes
+            else:
+                high_q = mid_q - 1
+
+        # If even at lowest quality it exceeds target, gently downscale
+        curr_img = img
+        while (not best_io or best_io.tell() > target_bytes) and (curr_img.width > 1200 or curr_img.height > 1200):
+            new_w = int(curr_img.width * 0.88)
+            new_h = int(curr_img.height * 0.88)
+            curr_img = curr_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            
+            s_low = 60
+            s_high = 96
+            for _ in range(5):
+                mid_q = (s_low + s_high) // 2
+                out_io = io.BytesIO()
+                curr_img.save(out_io, format="JPEG", quality=mid_q)
+                if out_io.tell() <= target_bytes:
+                    best_io = out_io
+                    s_low = mid_q + 1
+                else:
+                    s_high = mid_q - 1
+            if best_io and best_io.tell() <= target_bytes:
+                break
+
+        if not best_io:
+            uploaded_file.seek(0)
+            return uploaded_file
+
+        out_io = best_io
+        out_io.seek(0)
+        compressed = InMemoryUploadedFile(
+            file=out_io,
+            field_name=getattr(uploaded_file, "field_name", "images"),
+            name=uploaded_file.name,
+            content_type="image/jpeg",
+            size=out_io.getbuffer().nbytes,
+            charset=None,
+        )
+        return compressed
+    except Exception as exc:
+        logger.warning("Backend photo compression fallback skipped for %s: %s", getattr(uploaded_file, "name", "file"), exc)
+        uploaded_file.seek(0)
+        return uploaded_file
+
+
 @login_required
 def upload_photos(request, event_id):
     event = get_object_or_404(
@@ -470,6 +557,17 @@ def upload_photos(request, event_id):
             or "application/json" in request.headers.get("accept", "")
         )
 
+        compress_target_mb = None
+        target_mb_val = request.POST.get("compress_target_mb")
+        if target_mb_val:
+            try:
+                compress_target_mb = float(target_mb_val)
+            except (ValueError, TypeError):
+                compress_target_mb = None
+
+        if compress_target_mb and compress_target_mb > 0:
+            files = [enforce_photo_size_ceiling(f, compress_target_mb) for f in files]
+
         if not files:
             if is_ajax:
                 return JsonResponse({
@@ -482,12 +580,8 @@ def upload_photos(request, event_id):
                 event_id=event.id
             )
 
-        # Enforce maximum 150 photos per upload batch
-        MAX_BATCH_SIZE = 150
+        # Ingest all uploaded files without artificial truncation
         capped_notice = False
-        if len(files) > MAX_BATCH_SIZE:
-            files = files[:MAX_BATCH_SIZE]
-            capped_notice = True
 
         # Existing photos deduplication lookups for this event
         existing_records = list(
@@ -567,7 +661,10 @@ def upload_photos(request, event_id):
             event.ai_status = "processing"
             event.save(update_fields=["ai_status"])
 
-        process_event_photos_task.delay(event.id)
+        if USE_PARALLEL_ORCHESTRATOR:
+            orchestrate_event_processing.delay(event.id)
+        else:
+            process_event_photos_task.delay(event.id)
 
         if skipped_duplicates > 0:
             msg = (
@@ -600,7 +697,11 @@ def upload_photos(request, event_id):
         "events/upload_photos.html",
         {
             "event": event,
-            "form": form
+            "form": form,
+            "use_chunked_upload": USE_CHUNKED_UPLOAD,
+            "upload_chunk_size": UPLOAD_CHUNK_SIZE,
+            "upload_concurrency": UPLOAD_CONCURRENCY,
+            "max_upload_retries": MAX_UPLOAD_RETRIES,
         }
     )
 
@@ -640,8 +741,7 @@ def delete_photo(request, event_id, photo_id):
         event.people.all().delete()
     else:
         try:
-            from .services.person_clustering import cluster_event_people
-            cluster_event_people(event)
+            cluster_event_people_task.delay(event.id)
         except Exception:
             pass
 
@@ -709,8 +809,7 @@ def bulk_delete_photos(request, event_id):
         event.people.all().delete()
     else:
         try:
-            from .services.person_clustering import cluster_event_people
-            cluster_event_people(event)
+            cluster_event_people_task.delay(event.id)
         except Exception:
             pass
 
@@ -813,7 +912,10 @@ def import_drive_photos(request, event_id):
             event.ai_status = "processing"
             event.save(update_fields=["ai_status"])
 
-        process_event_photos_task.delay(event.id)
+        if USE_PARALLEL_ORCHESTRATOR:
+            orchestrate_event_processing.delay(event.id)
+        else:
+            process_event_photos_task.delay(event.id)
 
         return JsonResponse({
             "success": True,
@@ -843,17 +945,26 @@ def event_ai_status(request, event_id):
         tenant=request.user.tenant
     )
 
-    photos = event.photos.all().order_by("-uploaded_at", "-id")
+    all_photos = event.photos.all().order_by("-uploaded_at", "-id")
 
     photo_statuses = []
+    ready_photos_data = []
     completed_count = 0
     processing_count = 0
     pending_count = 0
     failed_count = 0
-    for photo in photos:
+
+    for photo in all_photos:
         st = (photo.processing_status or "pending").lower()
         if st in ("completed", "ready"):
             completed_count += 1
+            ready_photos_data.append({
+                "id": photo.id,
+                "thumbnail_url": photo.thumbnail_url or (photo.image.url if photo.image else ""),
+                "image_url": photo.image.url if photo.image else "",
+                "filename": os.path.basename(photo.image.name) if photo.image else "",
+                "uploaded_at": photo.uploaded_at.strftime("%b %d, %Y · %I:%M %p") if photo.uploaded_at else "",
+            })
         elif st == "processing":
             processing_count += 1
         elif st == "failed":
@@ -866,15 +977,32 @@ def event_ai_status(request, event_id):
             "processing_status": st,
         })
 
+    total_count = len(photo_statuses)
+    progress_percent = round((completed_count + failed_count) / total_count * 100, 1) if total_count > 0 else 100.0
+
+    people_data = []
+    for pe in event.people.all():
+        people_data.append({
+            "id": pe.id,
+            "name": pe.name,
+            "avatar_url": pe.avatar_url,
+            "photo_count": pe.photo_count,
+            "face_count": pe.face_count,
+        })
+
     return JsonResponse({
         "ai_status": event.ai_status,
         "photos": photo_statuses,
-        "total_count": len(photo_statuses),
+        "ready_photos": ready_photos_data,
+        "people": people_data,
+        "total_count": total_count,
         "completed_count": completed_count,
         "processing_count": processing_count,
         "pending_count": pending_count,
         "failed_count": failed_count,
+        "percent": progress_percent,
         "has_processing_photos": (processing_count + pending_count) > 0,
+        "people_count": len(people_data),
     })
 
 
@@ -940,7 +1068,7 @@ def public_event(request, public_token):
 
     # If full album access is enabled and this is a GET request, display all event photos directly
     if is_all_photos_accessible and request.method == "GET":
-        all_photos = event.photos.all().order_by("-uploaded_at", "-id")
+        all_photos = event.photos.filter(processing_status__in=["completed", "ready"]).order_by("id")
         return render(
             request,
             "events/public_event.html",
@@ -1242,3 +1370,250 @@ def recluster_event_people_api(request, event_id):
         logger.exception("Manual re-clustering failed for event %s", event.id)
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+
+
+# ==============================================================================
+# PHASE 2: CHUNKED UPLOAD, IDEMPOTENCY & PROGRESS API
+# ==============================================================================
+import uuid
+from config import (
+    USE_CHUNKED_UPLOAD,
+    UPLOAD_CHUNK_SIZE,
+    UPLOAD_CONCURRENCY,
+    MAX_UPLOAD_RETRIES,
+)
+from .models import PhotoUploadSession, PhotoUploadChunk
+
+
+@login_required
+@require_POST
+def upload_photo_chunk(request, event_id):
+    """
+    Accepts and saves a single chunk (e.g. 50 photos) of a larger upload session.
+    Guarantees chunk-level idempotency to prevent duplicates on retries.
+    """
+    event = get_object_or_404(
+        Event,
+        id=event_id,
+        tenant=request.user.tenant
+    )
+
+    upload_id_str = request.POST.get("upload_id")
+    if not upload_id_str:
+        return JsonResponse({"success": False, "error": "Missing upload_id"}, status=400)
+
+    try:
+        upload_id = uuid.UUID(upload_id_str)
+    except ValueError:
+        return JsonResponse({"success": False, "error": "Invalid upload_id UUID"}, status=400)
+
+    try:
+        chunk_index = int(request.POST.get("chunk_index", 0))
+        total_chunks = int(request.POST.get("total_chunks", 1))
+        total_files = int(request.POST.get("total_files", 0))
+    except (ValueError, TypeError):
+        return JsonResponse({"success": False, "error": "Invalid chunk parameters"}, status=400)
+
+    # Retrieve or initialize the upload session
+    session, _ = PhotoUploadSession.objects.get_or_create(
+        upload_id=upload_id,
+        defaults={
+            "event": event,
+            "total_files": total_files,
+            "total_chunks": total_chunks,
+            "status": "in_progress",
+        }
+    )
+
+    # -------------------------------------------------------------
+    # IDEMPOTENCY CHECK
+    # -------------------------------------------------------------
+    existing_chunk = PhotoUploadChunk.objects.filter(
+        session=session,
+        chunk_index=chunk_index
+    ).first()
+
+    if existing_chunk:
+        logger.info(
+            "Chunk %d of upload %s already processed. Returning cached success.",
+            chunk_index, upload_id
+        )
+        return JsonResponse({
+            "success": True,
+            "already_processed": True,
+            "upload_id": str(upload_id),
+            "chunk_index": chunk_index,
+            "saved_count": existing_chunk.file_count,
+            "skipped_duplicates": 0,
+            "completed_chunks": session.completed_chunks,
+            "total_chunks": session.total_chunks,
+        })
+
+    # Process files in this chunk
+    files = request.FILES.getlist("images") or request.FILES.getlist("photos")
+    if not files:
+        return JsonResponse({"success": False, "error": "No files received in this chunk"}, status=400)
+
+    compress_target_mb = None
+    target_mb_val = request.POST.get("compress_target_mb")
+    if target_mb_val:
+        try:
+            compress_target_mb = float(target_mb_val)
+        except (ValueError, TypeError):
+            compress_target_mb = None
+
+    if compress_target_mb and compress_target_mb > 0:
+        files = [enforce_photo_size_ceiling(f, compress_target_mb) for f in files]
+
+    # Deduplication check against event database
+    existing_records = list(
+        event.photos.values("file_hash", "original_filename", "file_size")
+    )
+    existing_hashes = {p["file_hash"] for p in existing_records if p["file_hash"]}
+    existing_name_sizes = {
+        (p["original_filename"].lower(), p["file_size"])
+        for p in existing_records
+        if p["original_filename"] and p["file_size"] > 0
+    }
+
+    files_to_save = []
+    skipped_duplicates = 0
+    batch_hashes = set()
+    batch_name_sizes = set()
+
+    for f in files:
+        orig_name = getattr(f, "name", "")
+        clean_name = os.path.basename(orig_name).lower()
+        file_size = getattr(f, "size", 0)
+
+        # Content hash
+        hasher = hashlib.md5()
+        for chunk_bytes in f.chunks():
+            hasher.update(chunk_bytes)
+        f.seek(0)
+        f_hash = hasher.hexdigest()
+
+        if (
+            (f_hash and (f_hash in existing_hashes or f_hash in batch_hashes))
+            or ((clean_name, file_size) in existing_name_sizes)
+            or ((clean_name, file_size) in batch_name_sizes)
+        ):
+            skipped_duplicates += 1
+            continue
+
+        if f_hash:
+            batch_hashes.add(f_hash)
+        if clean_name and file_size:
+            batch_name_sizes.add((clean_name, file_size))
+
+        files_to_save.append((f, orig_name, file_size, f_hash))
+
+    created_photos = []
+    with transaction.atomic():
+        for f, orig_name, file_size, f_hash in files_to_save:
+            photo = EventPhoto(
+                event=event,
+                image=f,
+                original_filename=orig_name,
+                file_size=file_size,
+                file_hash=f_hash,
+                processing_status="pending"
+            )
+            photo.save(generate_thumb=False)
+            created_photos.append(photo)
+
+        # Record chunk completion atomically
+        PhotoUploadChunk.objects.create(
+            session=session,
+            chunk_index=chunk_index,
+            file_count=len(created_photos),
+            status="completed"
+        )
+
+        completed_count = session.chunks.count()
+        session.completed_chunks = completed_count
+        session.save(update_fields=["completed_chunks", "updated_at"])
+
+    return JsonResponse({
+        "success": True,
+        "already_processed": False,
+        "upload_id": str(upload_id),
+        "chunk_index": chunk_index,
+        "saved_count": len(created_photos),
+        "skipped_duplicates": skipped_duplicates,
+        "completed_chunks": session.completed_chunks,
+        "total_chunks": session.total_chunks,
+    })
+
+
+@login_required
+def upload_session_status(request, event_id, upload_id):
+    """
+    Returns which chunks of an upload session have already completed.
+    Enables instant client-side resume support if an upload was interrupted.
+    """
+    event = get_object_or_404(
+        Event,
+        id=event_id,
+        tenant=request.user.tenant
+    )
+
+    session = get_object_or_404(
+        PhotoUploadSession,
+        upload_id=upload_id,
+        event=event
+    )
+
+    completed_chunk_indices = list(
+        session.chunks.values_list("chunk_index", flat=True)
+    )
+
+    return JsonResponse({
+        "success": True,
+        "upload_id": str(session.upload_id),
+        "status": session.status,
+        "completed_chunks": completed_chunk_indices,
+        "completed_chunk_count": len(completed_chunk_indices),
+        "total_chunks": session.total_chunks,
+        "total_files": session.total_files,
+    })
+
+
+@login_required
+@require_POST
+def upload_complete(request, event_id):
+    """
+    Called once all chunks are uploaded.
+    Marks session completed and triggers Phase 1 AI processing orchestrator ONCE.
+    """
+    event = get_object_or_404(
+        Event,
+        id=event_id,
+        tenant=request.user.tenant
+    )
+
+    upload_id_str = request.POST.get("upload_id")
+    if upload_id_str:
+        try:
+            upload_id = uuid.UUID(upload_id_str)
+            session = PhotoUploadSession.objects.filter(upload_id=upload_id, event=event).first()
+            if session:
+                session.status = "completed"
+                session.save(update_fields=["status", "updated_at"])
+        except ValueError:
+            pass
+
+    event.ai_status = "processing"
+    event.save(update_fields=["ai_status", "updated_at"])
+
+    # Trigger Phase 1 Orchestrator ONCE
+    if USE_PARALLEL_ORCHESTRATOR:
+        orchestrate_event_processing.delay(event.id)
+    else:
+        process_event_photos_task.delay(event.id)
+
+    return JsonResponse({
+        "success": True,
+        "message": "All chunks uploaded successfully. AI processing has started.",
+        "redirect_url": reverse("events:detail", kwargs={"event_id": event.id})
+    })

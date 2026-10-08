@@ -142,7 +142,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getCsrfToken() {
         const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
-        return input ? input.value : "";
+        if (input && input.value) return input.value;
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? match[1] : "";
     }
 
     function updateActiveCount() {
@@ -560,43 +562,223 @@ document.addEventListener("DOMContentLoaded", () => {
     const photosFileInput = document.getElementById("photos-file-input");
     const dropzoneIdleContent = document.getElementById("dropzone-idle-content");
     const dropzonePreviewContainer = document.getElementById("dropzone-preview-container");
-    const dropzoneThumbnailsStrip = document.getElementById("dropzone-thumbnails-strip");
+    const dropzoneNamesList = document.getElementById("dropzone-names-list");
     const previewCountChip = document.getElementById("preview-count-chip");
+    const previewTotalSize = document.getElementById("preview-total-size");
     const btnClearSelectedFiles = document.getElementById("btn-clear-selected-files");
     const btnStartUpload = document.getElementById("btn-start-upload");
     const uploadBtnLabel = document.getElementById("upload-btn-label");
-    const stripScrollPrev = document.getElementById("strip-scroll-prev");
-    const stripScrollNext = document.getElementById("strip-scroll-next");
+
+    // Photo Compression Controls (Max ceiling: 2 MB)
+    const btnDetailCompressToggle = document.getElementById("btn-detail-compress-toggle");
+    const detailCompressAdjusterBar = document.getElementById("detail-compress-adjuster-bar");
+    const detailCompressSlider = document.getElementById("detail-compress-slider");
+    const detailCompressTargetDisplay = document.getElementById("detail-compress-target-display");
+    const detailCompressHelp = document.getElementById("detail-compress-help");
+    const miniPresetBtns = document.querySelectorAll("#detail-compress-adjuster-bar .mini-preset-btn");
 
     const MAX_BATCH_PHOTOS = 150;
     let selectedFiles = [];
-    let objectUrlsToRevoke = [];
+    let isUploading = false;
+    let isDetailCompressActive = false;
+    let detailCompressTargetMB = "original"; // Default: Original Size (can decrease down to 2 MB max compression)
 
-    // Modern floating toast alert for batch limit enforcement
-    function showBatchLimitToast(message) {
-        let toast = document.getElementById("batch-limit-toast");
-        if (!toast) {
-            toast = document.createElement("div");
-            toast.id = "batch-limit-toast";
-            toast.className = "batch-limit-toast";
-            document.body.appendChild(toast);
-        }
-        toast.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <span>${message}</span>
-        `;
-        toast.classList.add("show");
-        if (toast._hideTimer) clearTimeout(toast._hideTimer);
-        toast._hideTimer = setTimeout(() => {
-            toast.classList.remove("show");
-        }, 4000);
+    // High-Fidelity Image Compression to Target Ceiling (Max 2MB)
+    async function compressImageToTarget(file, targetMB) {
+        const targetBytes = targetMB * 1024 * 1024;
+        if (!file || file.size <= targetBytes) return file;
+
+        return new Promise((resolve) => {
+            const objectUrl = URL.createObjectURL(file);
+            const img = new Image();
+
+            img.onload = async () => {
+                URL.revokeObjectURL(objectUrl);
+                try {
+                    let { width, height } = img;
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+
+                    // Preserve full original camera resolution (only cap extreme panoramas > 7200px)
+                    const maxDim = 7200;
+                    if (width > maxDim || height > maxDim) {
+                        const scale = Math.min(maxDim / width, maxDim / height);
+                        width = Math.round(width * scale);
+                        height = Math.round(height * scale);
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const getBlob = (q) => new Promise(res => canvas.toBlob(res, "image/jpeg", q));
+
+                    // Binary search quality between 0.50 and 0.98 to fill right up to targetBytes
+                    let low = 0.50;
+                    let high = 0.98;
+                    let bestBlob = null;
+
+                    for (let iter = 0; iter < 6; iter++) {
+                        const mid = (low + high) / 2;
+                        const blob = await getBlob(mid);
+                        if (blob && blob.size <= targetBytes) {
+                            bestBlob = blob;
+                            low = mid; // Try higher quality to get as close to targetMB as possible!
+                        } else {
+                            high = mid; // Need lower quality to get under targetMB
+                        }
+                    }
+
+                    // If quality alone cannot bring it under target ceiling, downscale dimensions slightly
+                    if (!bestBlob || bestBlob.size > targetBytes) {
+                        let scaleFactor = 0.88;
+                        while ((!bestBlob || bestBlob.size > targetBytes) && scaleFactor >= 0.40) {
+                            canvas.width = Math.round(width * scaleFactor);
+                            canvas.height = Math.round(height * scaleFactor);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                            let sLow = 0.60;
+                            let sHigh = 0.96;
+                            for (let iter = 0; iter < 4; iter++) {
+                                const mid = (sLow + sHigh) / 2;
+                                const blob = await getBlob(mid);
+                                if (blob && blob.size <= targetBytes) {
+                                    bestBlob = blob;
+                                    sLow = mid;
+                                } else {
+                                    sHigh = mid;
+                                }
+                            }
+                            if (bestBlob && bestBlob.size <= targetBytes) break;
+                            scaleFactor -= 0.12;
+                        }
+                    }
+
+                    if (bestBlob && bestBlob.size <= targetBytes) {
+                        resolve(new File([bestBlob], file.name, {
+                            type: "image/jpeg",
+                            lastModified: file.lastModified || Date.now(),
+                        }));
+                    } else if (bestBlob) {
+                        resolve(new File([bestBlob], file.name, { type: "image/jpeg", lastModified: file.lastModified }));
+                    } else {
+                        resolve(file);
+                    }
+                } catch (err) {
+                    console.warn("Client-side compression fallback for", file.name, err);
+                    resolve(file);
+                }
+            };
+
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                resolve(file);
+            };
+
+            img.src = objectUrl;
+        });
     }
 
-    // Parse existing photos in this album to prevent duplicates completely
+    if (btnDetailCompressToggle) {
+        btnDetailCompressToggle.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isUploading) return;
+            isDetailCompressActive = !isDetailCompressActive;
+
+            if (isDetailCompressActive) {
+                btnDetailCompressToggle.classList.add("active");
+                btnDetailCompressToggle.setAttribute("aria-pressed", "true");
+                if (detailCompressAdjusterBar) {
+                    detailCompressAdjusterBar.style.display = "block";
+                }
+            } else {
+                btnDetailCompressToggle.classList.remove("active");
+                btnDetailCompressToggle.setAttribute("aria-pressed", "false");
+                if (detailCompressAdjusterBar) {
+                    detailCompressAdjusterBar.style.display = "none";
+                }
+            }
+            if (selectedFiles && selectedFiles.length > 0) {
+                renderPreviewStrip();
+            }
+        });
+    }
+
+    function updateMiniTargetDisplay() {
+        const isOrig = (detailCompressTargetMB === "original" || !detailCompressTargetMB || detailCompressTargetMB >= 11);
+        if (detailCompressTargetDisplay) {
+            if (isOrig) {
+                detailCompressTargetDisplay.textContent = "Original Size";
+            } else if (Number(detailCompressTargetMB) === 2) {
+                detailCompressTargetDisplay.textContent = "2 MB (Max)";
+            } else {
+                detailCompressTargetDisplay.textContent = `${detailCompressTargetMB} MB`;
+            }
+        }
+
+        if (detailCompressHelp) {
+            if (isOrig) {
+                detailCompressHelp.textContent = "All photos upload at 100% original size. Adjust left to compress down to 2 MB maximum.";
+            } else {
+                const mb = Number(detailCompressTargetMB);
+                detailCompressHelp.textContent = `Photos > ${mb} MB will be compressed to ${mb} MB. Photos ≤ ${mb} MB stay original.`;
+            }
+        }
+
+        if (detailCompressSlider) {
+            detailCompressSlider.value = isOrig ? 11 : Number(detailCompressTargetMB);
+        }
+
+        miniPresetBtns.forEach((b) => {
+            const bVal = b.dataset.mb;
+            if (
+                (bVal === "original" && isOrig) ||
+                (String(bVal) === String(detailCompressTargetMB))
+            ) {
+                b.classList.add("active");
+            } else {
+                b.classList.remove("active");
+            }
+        });
+    }
+
+    if (detailCompressSlider) {
+        detailCompressSlider.addEventListener("input", (e) => {
+            const val = parseInt(e.target.value, 10);
+            if (val >= 11) {
+                detailCompressTargetMB = "original";
+            } else {
+                detailCompressTargetMB = Math.max(2, val);
+            }
+            updateMiniTargetDisplay();
+            if (selectedFiles && selectedFiles.length > 0) {
+                renderPreviewStrip();
+            }
+        });
+    }
+
+    miniPresetBtns.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const mb = btn.dataset.mb;
+            if (mb === "original") {
+                detailCompressTargetMB = "original";
+            } else {
+                detailCompressTargetMB = Math.max(2, parseInt(mb, 10) || 2);
+            }
+            updateMiniTargetDisplay();
+            if (selectedFiles && selectedFiles.length > 0) {
+                renderPreviewStrip();
+            }
+        });
+    });
+
+    // Initialize display state on load (defaults to Original Size)
+    updateMiniTargetDisplay();
+
+        // Parse existing photos in this album to prevent duplicates completely
     const existingAlbumPhotoSignatures = new Set();
     try {
         const rawJsonEl = document.getElementById("existing-event-photos-json");
@@ -619,48 +801,28 @@ document.addEventListener("DOMContentLoaded", () => {
     function enforceBatchLimit(incomingFiles, isAppending) {
         let combined = isAppending ? [...selectedFiles] : [];
         const batchKeys = new Set(combined.map((f) => `${f.name.toLowerCase().trim()}_${f.size}`));
-        let duplicateCount = 0;
-        let overflow = false;
 
         for (const file of incomingFiles) {
             const cleanName = file.name.toLowerCase().trim();
             const fullKey = `${cleanName}_${file.size}`;
 
-            // 1. Block if already uploaded to this event album
-            const isAlreadyInAlbum = existingAlbumPhotoSignatures.has(cleanName) || existingAlbumPhotoSignatures.has(fullKey);
-
-            // 2. Block if duplicate within the current selection batch
-            const isDuplicateInBatch = batchKeys.has(fullKey) || batchKeys.has(cleanName);
-
-            if (isAlreadyInAlbum || isDuplicateInBatch) {
-                duplicateCount++;
-                continue; // STRICTLY PREVENT DUPLICATES
+            // Only deduplicate identical files in the same staged selection batch
+            if (batchKeys.has(fullKey)) {
+                continue;
             }
 
             if (combined.length < MAX_BATCH_PHOTOS) {
                 combined.push(file);
                 batchKeys.add(fullKey);
-                batchKeys.add(cleanName);
             } else {
-                overflow = true;
                 break;
             }
-        }
-
-        if (duplicateCount > 0) {
-            showBatchLimitToast(`${duplicateCount} duplicate photo${duplicateCount > 1 ? "s were" : " was"} blocked (already in album or batch).`);
-        }
-
-        if (overflow) {
-            showBatchLimitToast(`Batch limit reached: Maximum ${MAX_BATCH_PHOTOS} photos per upload.`);
         }
 
         return combined;
     }
 
-    // Reference to names scrolling list elements
-    const dropzoneNamesList = document.getElementById("dropzone-names-list");
-    const previewTotalSize = document.getElementById("preview-total-size");
+    // Staged files sync helper
 
     // Helper to sync photosFileInput.files with selectedFiles array using DataTransfer
     function syncInputFiles() {
@@ -688,7 +850,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (dropzoneNamesList) dropzoneNamesList.innerHTML = "";
         if (dropzonePreviewContainer) dropzonePreviewContainer.style.display = "none";
         if (dropzoneIdleContent) dropzoneIdleContent.style.display = "flex";
-        if (btnStartUpload) btnStartUpload.setAttribute("disabled", "true");
+        if (btnStartUpload) {
+            btnStartUpload.setAttribute("disabled", "true");
+            btnStartUpload.disabled = true;
+            btnStartUpload.style.opacity = "";
+            btnStartUpload.style.pointerEvents = "";
+        }
         if (uploadBtnLabel) uploadBtnLabel.textContent = "Upload";
     }
 
@@ -745,6 +912,22 @@ document.addEventListener("DOMContentLoaded", () => {
             info.appendChild(nameSpan);
             info.appendChild(sizeSpan);
 
+            const shouldCompress = isDetailCompressActive && detailCompressTargetMB !== "original" && Number(detailCompressTargetMB) >= 2;
+            const targetMBNum = shouldCompress ? Number(detailCompressTargetMB) : null;
+
+            if (shouldCompress && targetMBNum) {
+                const targetBytes = targetMBNum * 1024 * 1024;
+                const tagSpan = document.createElement("span");
+                if (file.size > targetBytes) {
+                    tagSpan.className = "compress-card-tag tag-compress";
+                    tagSpan.textContent = `⚡ → max ${targetMBNum}MB`;
+                } else {
+                    tagSpan.className = "compress-card-tag tag-original";
+                    tagSpan.textContent = `Original (≤ ${targetMBNum}MB)`;
+                }
+                info.appendChild(tagSpan);
+            }
+
             // Remove button for individual staged photo
             const btnRemove = document.createElement("button");
             btnRemove.type = "button";
@@ -771,7 +954,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const totalMb = (totalBytes / (1024 * 1024)).toFixed(1);
         if (previewTotalSize) {
-            previewTotalSize.textContent = `${totalMb} MB total`;
+            const shouldCompress = isDetailCompressActive && detailCompressTargetMB !== "original" && Number(detailCompressTargetMB) >= 2;
+            const targetMBNum = shouldCompress ? Number(detailCompressTargetMB) : null;
+
+            if (shouldCompress && targetMBNum) {
+                const targetBytes = targetMBNum * 1024 * 1024;
+                const estBytes = selectedFiles.reduce((acc, f) => {
+                    return acc + (f.size > targetBytes ? Math.round(targetBytes * 0.95) : f.size);
+                }, 0);
+                const estMb = (estBytes / (1024 * 1024)).toFixed(1);
+                previewTotalSize.textContent = `~${estMb} MB est. (${totalMb} MB orig)`;
+                previewTotalSize.title = `Photos > ${targetMBNum}MB will be compressed to maximum ${targetMBNum}MB. Photos ≤ ${targetMBNum}MB stay original.`;
+            } else {
+                previewTotalSize.textContent = `${totalMb} MB total`;
+                previewTotalSize.title = "Photos will upload at original size.";
+            }
         }
 
         if (previewCountChip) {
@@ -798,7 +995,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const fileCount = selectedFiles.length;
         if (btnStartUpload) {
             btnStartUpload.removeAttribute("disabled");
-            if (uploadBtnLabel) uploadBtnLabel.textContent = `Upload & Process (${fileCount})`;
+            btnStartUpload.disabled = false;
+            btnStartUpload.style.opacity = "1";
+            btnStartUpload.style.pointerEvents = "auto";
+            if (uploadBtnLabel) uploadBtnLabel.textContent = `Upload (${fileCount})`;
         }
     }
 
@@ -806,10 +1006,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btnClearSelectedFiles.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Restore file input so user can choose new files
-            photosFileInput.value = "";
-            photosFileInput.style.display = "";
-            photosFileInput.style.pointerEvents = "auto";
+            cleanupPreviews();
             photosFileInput.click();
         });
     }
@@ -817,7 +1014,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (photosFileInput && dropzoneBox) {
         photosFileInput.addEventListener("change", () => {
             const files = Array.from(photosFileInput.files || []);
-            const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+            const imageFiles = files.filter((f) => {
+                return (f.type && f.type.startsWith("image/")) || /\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?)$/i.test(f.name);
+            });
 
             if (imageFiles.length > 0) {
                 selectedFiles = enforceBatchLimit(imageFiles, false);
@@ -834,9 +1033,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Clicking on dropzone when idle triggers file picker
         dropzoneBox.addEventListener("click", (e) => {
-            // Only trigger if not already in preview mode or clicking outside preview container
+            if (e.target === photosFileInput) return; // Native click handles file picker!
             if (!dropzoneBox.classList.contains("has-files")) {
-                photosFileInput.click();
+                if (photosFileInput) photosFileInput.click();
             }
         });
 
@@ -859,7 +1058,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dropzoneBox.addEventListener("drop", (e) => {
             if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                const droppedFiles = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+                const droppedFiles = Array.from(e.dataTransfer.files).filter((f) => {
+                    return (f.type && f.type.startsWith("image/")) || /\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?)$/i.test(f.name);
+                });
                 if (droppedFiles.length > 0) {
                     selectedFiles = enforceBatchLimit(droppedFiles, selectedFiles.length > 0);
                     syncInputFiles();
@@ -876,7 +1077,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Ensure dropzone starts completely in idle mode on page load
     cleanupPreviews();
 
-    let isUploading = false;
     const localUploadForm = document.getElementById("local-upload-form");
     const dropzoneUploadingOverlay = document.getElementById("dropzone-uploading-overlay");
     const uploadBarFill = document.getElementById("upload-bar-fill");
@@ -887,7 +1087,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadSpinPath = document.querySelector(".upload-spin-path");
 
     if (localUploadForm) {
-        localUploadForm.addEventListener("submit", (e) => {
+        localUploadForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             if (isUploading) return;
@@ -912,12 +1112,58 @@ document.addEventListener("DOMContentLoaded", () => {
             // Show live progress overlay
             if (dropzoneUploadingOverlay) {
                 dropzoneUploadingOverlay.style.display = "flex";
-                if (uploadProgressTitle) {
-                    uploadProgressTitle.textContent = `Uploading ${selectedFiles.length} photo${selectedFiles.length > 1 ? "s" : ""}...`;
-                }
                 if (uploadBarFill) uploadBarFill.style.width = "0%";
                 if (uploadPctText) uploadPctText.textContent = "0%";
-                if (uploadStatusSubtext) uploadStatusSubtext.textContent = "Transferring high-resolution files to server...";
+                if (uploadStatusSubtext) uploadStatusSubtext.textContent = "Preparing files for transfer...";
+            }
+
+            // ---------------------------------------------------------
+            // Selective Compression Pre-Pass
+            // Only compresses if toggle is active AND target is not 'original'
+            // ---------------------------------------------------------
+            const shouldCompress = isDetailCompressActive && detailCompressTargetMB !== "original" && Number(detailCompressTargetMB) >= 2;
+            const targetMBNum = shouldCompress ? Number(detailCompressTargetMB) : null;
+
+            if (shouldCompress && targetMBNum) {
+                const targetBytes = targetMBNum * 1024 * 1024;
+                const toCompress = selectedFiles.filter(f => f.size > targetBytes);
+
+                if (toCompress.length > 0) {
+                    if (uploadProgressTitle) {
+                        uploadProgressTitle.textContent = `Optimizing ${toCompress.length} large photo(s) to max ${targetMBNum}MB...`;
+                    }
+                    if (uploadStatusSubtext) {
+                        uploadStatusSubtext.textContent = `Photos ≤ ${targetMBNum}MB will stay in original size.`;
+                    }
+
+                    const compressedMap = new Map();
+                    for (let i = 0; i < toCompress.length; i++) {
+                        const f = toCompress[i];
+                        const pct = Math.round(((i + 1) / toCompress.length) * 100);
+                        if (uploadBarFill) uploadBarFill.style.width = pct + "%";
+                        if (uploadPctText) uploadPctText.textContent = pct + "%";
+                        if (uploadProgressTitle) {
+                            uploadProgressTitle.textContent = `Optimizing photo ${i + 1} of ${toCompress.length} to max ${targetMBNum}MB...`;
+                        }
+                        try {
+                            const compFile = await compressImageToTarget(f, targetMBNum);
+                            compressedMap.set(f, compFile);
+                        } catch (err) {
+                            console.warn("Compression fallback for", f.name, err);
+                            compressedMap.set(f, f);
+                        }
+                    }
+
+                    selectedFiles = selectedFiles.map(f => compressedMap.get(f) || f);
+                    syncInputFiles();
+                }
+            }
+
+            if (uploadProgressTitle) {
+                uploadProgressTitle.textContent = `Uploading ${selectedFiles.length} photo${selectedFiles.length > 1 ? "s" : ""}...`;
+            }
+            if (uploadStatusSubtext) {
+                uploadStatusSubtext.textContent = "Transferring optimized files to server...";
             }
 
             // AJAX Upload via XMLHttpRequest for real-time progress feedback
@@ -928,6 +1174,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const csrfInput = localUploadForm.querySelector("input[name='csrfmiddlewaretoken']");
             if (csrfInput) {
                 formData.append("csrfmiddlewaretoken", csrfInput.value);
+            }
+
+            if (shouldCompress && targetMBNum) {
+                formData.append("compress_target_mb", targetMBNum);
             }
 
             selectedFiles.forEach((f) => {
@@ -1084,8 +1334,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================================================
     // 6. PHOTO SELECTION & DYNAMIC TOOLBAR (Points 3, 4, 5, 8, 12)
     // ============================================================
-    const photoCards = Array.from(document.querySelectorAll(".little-photo-card"));
-    const photoCheckboxes = Array.from(document.querySelectorAll(".photo-checkbox"));
+    let photoCards = Array.from(document.querySelectorAll("#photo-cards-grid .little-photo-card"));
+    let photoCheckboxes = Array.from(document.querySelectorAll("#photo-cards-grid .photo-checkbox"));
+
+    function refreshCardsAndCheckboxes() {
+        photoCards = Array.from(document.querySelectorAll("#photo-cards-grid .little-photo-card"));
+        photoCheckboxes = Array.from(document.querySelectorAll("#photo-cards-grid .photo-checkbox"));
+    }
     const masterSelectCheckbox = document.getElementById("master-select-checkbox");
     const btnSelectAll = document.getElementById("btn-select-all");
     const selectAllLabel = document.getElementById("select-all-label");
@@ -1104,6 +1359,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateSelectionUI() {
+        refreshCardsAndCheckboxes();
         const selectedIds = getSelectedPhotoIds();
         const total = photoCheckboxes.length;
         const count = selectedIds.length;
@@ -1254,9 +1510,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Individual photo hover delete
-    document.querySelectorAll(".hover-btn-delete").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
+    // Delegated individual photo hover delete
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest(".hover-btn-delete");
+        if (btn) {
             e.stopPropagation();
             const photoId = btn.getAttribute("data-delete-photo-id");
             const photoNum = btn.getAttribute("data-photo-num") || "";
@@ -1268,7 +1525,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 deletePhotoLabel.textContent = `#${photoNum}`;
             }
             openModal("delete-photo-modal");
-        });
+        }
     });
 
     // ============================================================
@@ -1339,15 +1596,27 @@ document.addEventListener("DOMContentLoaded", () => {
         updateLightboxContent();
     }
 
-    photoCards.forEach((card, idx) => {
-        const thumb = card.querySelector(".photo-thumb-container");
-        if (thumb) {
-            thumb.addEventListener("click", (e) => {
-                if (e.target.closest(".hover-action-btn") || e.target.closest(".card-select-overlay-right")) return;
-                openLightbox(idx);
-            });
-        }
-    });
+    const photoCardsGrid = document.getElementById("photo-cards-grid");
+    if (photoCardsGrid) {
+        photoCardsGrid.addEventListener("click", (e) => {
+            if (e.target.closest(".hover-action-btn") || e.target.closest(".card-select-overlay-right")) return;
+            const thumb = e.target.closest(".photo-thumb-container");
+            if (thumb) {
+                refreshCardsAndCheckboxes();
+                const card = thumb.closest(".little-photo-card");
+                const idx = photoCards.indexOf(card);
+                if (idx !== -1) {
+                    openLightbox(idx);
+                }
+            }
+        });
+
+        photoCardsGrid.addEventListener("change", (e) => {
+            if (e.target.classList.contains("photo-checkbox")) {
+                updateSelectionUI();
+            }
+        });
+    }
 
     if (lightboxClose) lightboxClose.addEventListener("click", closeLightbox);
     if (lightboxBackdrop) lightboxBackdrop.addEventListener("click", closeLightbox);
@@ -1367,20 +1636,18 @@ document.addEventListener("DOMContentLoaded", () => {
     let pollingTimer = null;
 
     function shouldPoll() {
-        const allCards = document.querySelectorAll(".little-photo-card");
-        let hasActivePhotos = false;
-        allCards.forEach((card) => {
-            const status = (card.dataset.status || "").toLowerCase();
-            if (status === "pending" || status === "processing" || card.classList.contains("is-processing")) {
-                hasActivePhotos = true;
-            }
-        });
+        const viewport = document.getElementById("event-viewport");
+        if (!viewport || !statusUrl) return false;
+        const hasProcessingAttr = viewport.dataset.hasProcessing === "true";
+        const hasProcessingEmpty = document.querySelector(".processing-empty-state") !== null;
+        const banner = document.getElementById("live-ai-progress-banner");
+        const isBannerActive = banner && banner.style.display !== "none" && !banner.classList.contains("is-complete");
         const aiStatusElem = document.getElementById("ai-status");
         const isEventProcessing = aiStatusElem && (
             aiStatusElem.classList.contains("status-processing") || 
             aiStatusElem.classList.contains("status-pending")
         );
-        return hasActivePhotos || isEventProcessing;
+        return hasProcessingAttr || hasProcessingEmpty || isBannerActive || isEventProcessing;
     }
 
     async function pollStatus() {
@@ -1484,68 +1751,256 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
-            // 3. Update Live AI Indexing Progress Banner
+            // ============================================================
+            // LIVE STREAMING OF READY PHOTOS (Direct DOM Prepend without Reload)
+            // ============================================================
+            if (data.ready_photos && Array.isArray(data.ready_photos)) {
+                const grid = document.getElementById("photo-cards-grid");
+                const procEmptyState = document.getElementById("processing-empty-state");
+                const noPhotosEmptyState = document.getElementById("no-photos-empty-state");
+                const galleryBulkToolbar = document.getElementById("gallery-bulk-toolbar");
+
+                let newlyAddedCount = 0;
+
+                // data.ready_photos is sorted newest-first.
+                // Iterate in reverse (oldest -> newest) and prepend so newest stays at top.
+                for (let i = data.ready_photos.length - 1; i >= 0; i--) {
+                    const p = data.ready_photos[i];
+                    const existingCard = document.getElementById(`photo-card-${p.id}`);
+                    if (!existingCard && grid) {
+                        // Unhide grid and toolbar; hide empty states
+                        if (procEmptyState) procEmptyState.style.display = "none";
+                        if (noPhotosEmptyState) noPhotosEmptyState.style.display = "none";
+                        if (galleryBulkToolbar) galleryBulkToolbar.style.display = "flex";
+                        grid.style.display = "grid";
+
+                        const card = document.createElement("div");
+                        card.className = "little-photo-card just-revealed";
+                        card.id = `photo-card-${p.id}`;
+                        card.dataset.id = p.id;
+                        card.dataset.status = "completed";
+
+                        card.innerHTML = `
+                            <div class="card-select-overlay-right">
+                                <input type="checkbox" class="photo-checkbox sr-checkbox" value="${p.id}" id="chk-${p.id}" aria-label="Select photo #${p.id}">
+                                <label for="chk-${p.id}" class="custom-glass-chk" title="Select photo">
+                                    <svg class="chk-check-svg" viewBox="0 0 24 24" fill="none" stroke="#191730" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </label>
+                            </div>
+
+                            <div class="photo-thumb-container" data-full-img="${p.image_url}" data-photo-id="${p.id}" data-photo-number="${p.id}">
+                                <img src="${p.thumbnail_url}" alt="${p.filename || 'Photo'}" loading="lazy" class="card-photo-img" id="photo-img-${p.id}">
+
+                                <div class="card-hover-actions">
+                                    <a href="${p.image_url}" download class="hover-action-btn hover-btn-download" title="Download photo">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </a>
+
+                                    <button type="button" class="hover-action-btn hover-btn-delete" data-delete-photo-id="${p.id}" data-photo-num="${p.id}" title="Delete photo">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="photo-card-info">
+                                <div class="photo-info-left">
+                                    <span class="photo-chrono-number">#${p.id}</span>
+                                    <span class="photo-upload-time" title="${p.uploaded_at}">${p.uploaded_at}</span>
+                                </div>
+
+                                <div class="photo-info-right">
+                                    <span class="ai-status-circle status-completed"
+                                          id="photo-status-${p.id}"
+                                          title="AI Status: Ready"
+                                          data-status="completed">
+                                        <svg class="status-svg" viewBox="0 0 24 24" fill="none">
+                                            <circle cx="12" cy="12" r="8.5" stroke="#10b981" stroke-width="2" fill="rgba(16, 185, 129, 0.12)" />
+                                            <polyline points="7.8 12 10.6 14.8 16.2 9.2" stroke="#10b981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+
+                        // Prepend live ready photo onto top of grid
+                        grid.prepend(card);
+                        newlyAddedCount++;
+
+                        setTimeout(() => {
+                            card.classList.remove("just-revealed");
+                        }, 2200);
+                    }
+                }
+
+                if (newlyAddedCount > 0) {
+                    refreshCardsAndCheckboxes();
+                    updateSelectionUI();
+                }
+            }
+
+            // ============================================================
+            // LIVE STREAMING OF SORTED PEOPLE
+            // ============================================================
+            if (data.people && Array.isArray(data.people) && data.people.length > 0) {
+                const peopleTabBadge = document.getElementById("tab-count-people");
+                if (peopleTabBadge) peopleTabBadge.textContent = data.people.length;
+                const peopleCatalogCount = document.getElementById("people-catalog-count");
+                if (peopleCatalogCount) peopleCatalogCount.textContent = data.people.length;
+
+                const peopleCatalogContainer = document.getElementById("people-catalog-container");
+                let peopleGrid = document.getElementById("people-cards-grid");
+
+                if (!peopleGrid && peopleCatalogContainer) {
+                    const emptyPeoplePanel = peopleCatalogContainer.querySelector(".empty-state-panel");
+                    if (emptyPeoplePanel) emptyPeoplePanel.remove();
+
+                    peopleGrid = document.createElement("div");
+                    peopleGrid.className = "people-cards-grid";
+                    peopleGrid.id = "people-cards-grid";
+                    peopleCatalogContainer.appendChild(peopleGrid);
+                }
+
+                if (peopleGrid) {
+                    data.people.forEach((person) => {
+                        let card = document.getElementById(`person-card-${person.id}`);
+                        if (!card) {
+                            card = document.createElement("div");
+                            card.className = "person-card";
+                            card.id = `person-card-${person.id}`;
+                            card.dataset.personId = person.id;
+                            card.dataset.personName = person.name;
+                            card.innerHTML = `
+                                <div class="person-avatar-wrap">
+                                    <img src="${person.avatar_url || ''}" alt="${person.name}" class="person-avatar-img" loading="lazy">
+                                    <span class="person-photo-pill">${person.photo_count} photo${person.photo_count === 1 ? '' : 's'}</span>
+                                </div>
+                                <div class="person-info-wrap">
+                                    <div class="person-name-row">
+                                        <h3 class="person-name-display" id="person-name-txt-${person.id}">${person.name}</h3>
+                                        <button type="button" class="btn-edit-person-name" data-person-id="${person.id}" title="Rename person">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <span class="person-faces-meta">${person.face_count} face instance${person.face_count === 1 ? '' : 's'}</span>
+                                </div>
+                                <div class="person-card-actions">
+                                    <button type="button" class="btn-view-person-photos" data-person-id="${person.id}">
+                                        <span>View Photos</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <a href="/events/${eventId}/people/${person.id}/download/" class="btn-download-person-zip" title="Download all photos of ${person.name} as ZIP" download>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </a>
+                                </div>
+                            `;
+                            card.addEventListener("click", (e) => {
+                                if (e.target.closest(".btn-edit-person-name") || e.target.closest(".btn-download-person-zip")) return;
+                                openPersonDrilldown(person.id, person.name, person.avatar_url);
+                            });
+                            peopleGrid.appendChild(card);
+                        }
+                    });
+                }
+            }
+
+            // Update All Photos count badge
+            const tabCountAll = document.getElementById("tab-count-all");
+            if (tabCountAll && data.completed_count !== undefined) {
+                tabCountAll.textContent = data.completed_count;
+            }
+            const galleryCount = document.getElementById("gallery-count");
+            if (galleryCount && data.completed_count !== undefined) {
+                galleryCount.textContent = data.completed_count;
+            }
+
+            // Update Live Progress Banner
             const banner = document.getElementById("live-ai-progress-banner");
+            const total = data.total_count !== undefined ? data.total_count : (data.photos ? data.photos.length : 0);
+            const completed = data.completed_count !== undefined ? data.completed_count : 
+                (data.photos ? data.photos.filter(p => p.processing_status === "completed" || p.processing_status === "ready").length : 0);
+            const processing = data.processing_count !== undefined ? data.processing_count : 
+                (data.photos ? data.photos.filter(p => p.processing_status === "processing").length : 0);
+            const pending = data.pending_count !== undefined ? data.pending_count : 
+                (data.photos ? data.photos.filter(p => p.processing_status === "pending").length : 0);
+            
+            const liveCompleted = document.getElementById("live-completed-count");
+            const liveTotal = document.getElementById("live-total-count");
+            const liveBarFill = document.getElementById("live-progress-bar-fill");
+            const liveTitle = document.getElementById("live-progress-title");
+            const liveSubtitle = document.getElementById("live-progress-subtitle");
+
+            const hasUnfinished = (processing + pending) > 0;
+
             if (banner) {
-                const total = data.total_count !== undefined ? data.total_count : (data.photos ? data.photos.length : 0);
-                const completed = data.completed_count !== undefined ? data.completed_count : 
-                    (data.photos ? data.photos.filter(p => p.processing_status === "completed" || p.processing_status === "ready").length : 0);
-                const processing = data.processing_count !== undefined ? data.processing_count : 
-                    (data.photos ? data.photos.filter(p => p.processing_status === "processing").length : 0);
-                const pending = data.pending_count !== undefined ? data.pending_count : 
-                    (data.photos ? data.photos.filter(p => p.processing_status === "pending").length : 0);
-                
-                const liveCompleted = document.getElementById("live-completed-count");
-                const liveTotal = document.getElementById("live-total-count");
-                const liveBarFill = document.getElementById("live-progress-bar-fill");
-                const liveTitle = document.getElementById("live-progress-title");
-                const liveSubtitle = document.getElementById("live-progress-subtitle");
-
-                const hasUnfinished = (processing + pending) > 0;
-
                 if (hasUnfinished) {
                     banner.style.display = "flex";
                     banner.classList.remove("is-complete");
 
+                    const prevCompleted = liveCompleted ? parseInt(liveCompleted.textContent || "0", 10) : 0;
                     if (liveCompleted) liveCompleted.textContent = completed;
                     if (liveTotal) liveTotal.textContent = total;
+
+                    const chip = document.getElementById("live-progress-counter-chip");
+                    if (chip && completed !== prevCompleted) {
+                        chip.classList.remove("chip-bump");
+                        void chip.offsetWidth;
+                        chip.classList.add("chip-bump");
+                    }
 
                     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
                     if (liveBarFill) liveBarFill.style.width = `${pct}%`;
 
                     if (liveTitle) {
-                        if (processing > 0) {
-                            liveTitle.textContent = `AI Indexing in Progress (${processing} analyzing, ${pending} queued)`;
-                        } else {
-                            liveTitle.textContent = `Photos Uploaded & Queued (${pending} waiting)`;
+                        if (liveTitle.dataset.currentTitle !== "uploading") {
+                            liveTitle.innerHTML = `Your images are uploading<span class="processing-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                            liveTitle.dataset.currentTitle = "uploading";
                         }
                     }
-                } else if (banner.style.display !== "none" && !banner.classList.contains("is-complete") && total > 0) {
+                    if (liveSubtitle) {
+                        liveSubtitle.textContent = "";
+                    }
+                } else if (total > 0 && !hasUnfinished) {
                     // All photos have finished!
                     banner.classList.add("is-complete");
                     if (liveCompleted) liveCompleted.textContent = total;
                     if (liveTotal) liveTotal.textContent = total;
                     if (liveBarFill) liveBarFill.style.width = "100%";
-                    if (liveTitle) liveTitle.textContent = "✓ All Photos Processed & Revealed!";
-                    if (liveSubtitle) liveSubtitle.textContent = "All photos are now indexed, unmasked, and ready to explore";
+                    if (liveTitle) liveTitle.innerHTML = `All photos ready!`;
+                    if (liveSubtitle) liveSubtitle.textContent = "";
 
                     setTimeout(() => {
-                        if (banner && banner.classList.contains("is-complete")) {
-                            banner.style.opacity = "0";
-                            banner.style.transform = "translateY(-8px)";
-                            setTimeout(() => {
-                                banner.style.display = "none";
-                                banner.style.opacity = "";
-                                banner.style.transform = "";
-                            }, 500);
-                        }
-                    }, 4000);
+                        banner.style.opacity = "0";
+                        banner.style.transform = "translateY(-8px)";
+                        setTimeout(() => {
+                            banner.style.display = "none";
+                            banner.style.opacity = "";
+                            banner.style.transform = "";
+                        }, 500);
+                    }, 3500);
                 }
             }
-
-            // 4. Continue polling with high responsiveness while active
-            if (shouldPoll()) {
+            if (hasUnfinished || (data.ai_status && data.ai_status === "processing")) {
                 pollingTimer = setTimeout(pollStatus, 1200);
+            } else if (shouldPoll()) {
+                pollingTimer = setTimeout(pollStatus, 1500);
             }
         } catch (err) {
             console.warn("AI Status poll error:", err);
@@ -1795,6 +2250,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (viewBtn) viewBtn.addEventListener("click", clickHandler);
         if (avatarWrap) avatarWrap.addEventListener("click", clickHandler);
+        card.addEventListener("click", clickHandler);
     });
 
     // --- Person Rename Modal & Handlers ---

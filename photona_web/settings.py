@@ -118,7 +118,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
@@ -167,3 +167,23 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
 # In-memory file upload buffer size before spooling to disk (10MB)
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+
+# --------------------------------------------------------------------------
+# SQLite WAL Mode & Busy Timeout (High Concurrency Protection)
+# --------------------------------------------------------------------------
+from django.db.backends.signals import connection_created
+
+def _set_sqlite_pragmas(sender, connection, **kwargs):
+    if connection.vendor == "sqlite":
+        cursor = connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA busy_timeout = 30000;")
+        cursor.execute("PRAGMA synchronous = NORMAL;")
+
+connection_created.connect(_set_sqlite_pragmas)
+
+# Celery Fair Distribution & Late Acknowledgement
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
